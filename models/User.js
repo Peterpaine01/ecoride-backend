@@ -26,16 +26,18 @@ class User extends Account {
     connection,
     email,
     password,
-    firstName,
-    lastName,
-    role,
+    username,
+    credits,
+    gender,
+    account_status,
+    is_driver,
     callback
   ) {
     const query =
-      "INSERT INTO users (email, password, first_name, last_name, role) VALUES (?, ?, ?, ?, ?)";
+      "INSERT INTO users (email, password, username, credits, gender,account_status, is_driver) VALUES (?, ?, ?, ?, ?)";
     connection.query(
       query,
-      [email, password, firstName, lastName, role],
+      [email, password, username, credits, gender, account_status, is_driver],
       (err, results) => {
         if (err) {
           return callback(err, null);
