@@ -13,6 +13,12 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+// -------- SET UP ----------
+
+app.all("*", (req, res) => {
+  res.status(404).json({ message: "This route does not exist" });
+});
+
 app.get("/", (req, res) => {
   res.send("Server Node.js running !");
 });
