@@ -7,9 +7,13 @@ require("./config/mysql");
 require("./config/mongodb");
 require("./config/cloudinary");
 
+// create server
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// use routes
+app.use(require("./routes/userRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
