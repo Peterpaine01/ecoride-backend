@@ -22,41 +22,18 @@ class User extends Account {
     this.is_driver = is_driver;
   }
 
-  static createUser(
-    connection,
-    email,
-    password,
-    username,
-    gender,
-    is_driver,
-    callback
-  ) {
-    // insert user in table accounts
-    const accountQuery =
-      "INSERT INTO accounts (email, password, account_type) VALUES (?, ?, 'user')";
-
-    connection.query(accountQuery, [email, password], (err, results) => {
-      if (err) {
-        return callback(err, null);
-      }
-
-      const accountId = results.insertId; // get id created
-
-      // insert user in table users with accounts(id)
-      const userQuery =
+  static async createUser(connection, account_id, username, gender, is_driver) {
+    try {
+      const query =
         "INSERT INTO users (account_id, username, gender, is_driver) VALUES (?, ?, ?, ?)";
+      const [results] = await connection
+        .promise()
+        .query(query, [account_id, username, gender, is_driver]);
 
-      connection.query(
-        userQuery,
-        [accountId, username, gender, is_driver],
-        (err, results) => {
-          if (err) {
-            return callback(err, null);
-          }
-          callback(null, accountId); // return account id
-        }
-      );
-    });
+      return account_id;
+    } catch (err) {
+      throw err;
+    }
   }
 
   static getUserById(connection, id, callback) {

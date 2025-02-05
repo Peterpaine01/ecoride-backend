@@ -3,41 +3,42 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/mysql");
 
-// Import model User
+// Import models
+const Account = require("../models/Account");
 const User = require("../models/User");
 const Driver = require("../models/Driver");
 
 // CREATE - add a user or a driver
-router.post("/create-user", (req, res) => {
+router.post("/create-user", async (req, res) => {
   const { email, password, username, gender, is_driver } = req.body;
 
-  // Create user
-  User.createUser(
-    db,
-    email,
-    password,
-    username,
-    gender,
-    is_driver,
-    (err, userId) => {
-      if (err) return res.status(500).json({ error: err.message });
+  try {
+    // Creeate account
+    const accountId = await Account.createAccount(db, email, password);
 
-      // if user is a driver, insert in table `drivers`
-      if (is_driver === 1) {
-        return Driver.createDriver(db, userId, (err, driverId) => {
-          if (err) return res.status(500).json({ error: err.message });
-          return res
-            .status(201)
-            .json({ message: "Driver created successfully", userId: driverId });
-        });
-      }
+    // Create user inherited from account
+    const userId = await User.createUser(
+      db,
+      accountId,
+      username,
+      gender,
+      is_driver
+    );
 
-      // else return simple user
+    // if `is_driver === 1`, create driver inherited from user
+    if (is_driver === 1) {
+      await Driver.createDriver(db, accountId);
       return res
         .status(201)
-        .json({ message: "User created successfully", userId });
+        .json({ message: "Driver created successfully", accountId });
     }
-  );
+
+    return res
+      .status(201)
+      .json({ message: "User created successfully", userId });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;

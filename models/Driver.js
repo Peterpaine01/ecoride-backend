@@ -30,33 +30,36 @@ class Driver extends User {
     this.accept_smoking = accept_smoking;
     this.accept_animals = accept_animals;
   }
-  static createDriver(connection, user_id, callback) {
-    // Vérifier si l'utilisateur existe déjà dans la table users
-    const checkUserQuery = "SELECT * FROM users WHERE account_id = ?";
-    connection.query(checkUserQuery, [user_id], (err, results) => {
-      if (err) return callback(err, null);
+  static async createDriver(connection, user_id) {
+    console.log(" createDriver user_id -> ", user_id);
 
-      if (results.length === 0) {
-        return callback(new Error("User does not exist"), null);
+    try {
+      // check if user already exists in table users
+      const [userResults] = await connection
+        .promise()
+        .query("SELECT * FROM users WHERE account_id = ?", [user_id]);
+      // console.log("userResults -> ", userResults);
+
+      if (userResults.length === 0) {
+        throw new Error("User does not exist");
       }
 
-      // Vérifier si l'utilisateur est déjà un conducteur
-      const checkDriverQuery = "SELECT * FROM drivers WHERE user_id = ?";
-      connection.query(checkDriverQuery, [user_id], (err, driverResults) => {
-        if (err) return callback(err, null);
+      // check if user is already a driver
+      const [driverResults] = await connection
+        .promise()
+        .query("SELECT * FROM drivers WHERE user_id = ?", [user_id]);
+      if (driverResults.length > 0) {
+        throw new Error("User is already a driver");
+      }
 
-        if (driverResults.length > 0) {
-          return callback(new Error("User is already a driver"), null);
-        }
+      // Insert in table drivers
+      const query = "INSERT INTO drivers (user_id) VALUES (?)";
+      await connection.promise().query(query, [user_id]);
 
-        // Insérer dans la table drivers
-        const driverQuery = "INSERT INTO drivers (user_id) VALUES (?)";
-        connection.query(driverQuery, [user_id], (err, results) => {
-          if (err) return callback(err, null);
-          callback(null, user_id);
-        });
-      });
-    });
+      return user_id;
+    } catch (err) {
+      throw err;
+    }
   }
 
   static getDriverById(connection, id, callback) {
