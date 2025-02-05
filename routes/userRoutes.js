@@ -5,11 +5,13 @@ const db = require("../config/mysql");
 
 // Import model User
 const User = require("../models/User");
+const Driver = require("../models/Driver");
 
-// CREATE - add a user
+// CREATE - add a user or a driver
 router.post("/create-user", (req, res) => {
   const { email, password, username, gender, is_driver } = req.body;
 
+  // Create user
   User.createUser(
     db,
     email,
@@ -19,7 +21,21 @@ router.post("/create-user", (req, res) => {
     is_driver,
     (err, userId) => {
       if (err) return res.status(500).json({ error: err.message });
-      res.status(201).json({ message: "User created with succes", userId });
+
+      // if user is a driver, insert in table `drivers`
+      if (is_driver === 1) {
+        return Driver.createDriver(db, userId, (err, driverId) => {
+          if (err) return res.status(500).json({ error: err.message });
+          return res
+            .status(201)
+            .json({ message: "Driver created successfully", userId: driverId });
+        });
+      }
+
+      // else return simple user
+      return res
+        .status(201)
+        .json({ message: "User created successfully", userId });
     }
   );
 });

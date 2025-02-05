@@ -31,7 +31,7 @@ class User extends Account {
     is_driver,
     callback
   ) {
-    // 1️⃣ Insérer l'utilisateur dans la table accounts
+    // insert user in table accounts
     const accountQuery =
       "INSERT INTO accounts (email, password, account_type) VALUES (?, ?, 'user')";
 
@@ -40,9 +40,9 @@ class User extends Account {
         return callback(err, null);
       }
 
-      const accountId = results.insertId; // Récupérer l'ID du compte créé
+      const accountId = results.insertId; // get id created
 
-      // 2️⃣ Insérer l'utilisateur dans la table users avec l'ID du compte
+      // insert user in table users with accounts(id)
       const userQuery =
         "INSERT INTO users (account_id, username, gender, is_driver) VALUES (?, ?, ?, ?)";
 
@@ -53,7 +53,7 @@ class User extends Account {
           if (err) {
             return callback(err, null);
           }
-          callback(null, accountId); // Retourner l'ID du compte
+          callback(null, accountId); // return account id
         }
       );
     });
