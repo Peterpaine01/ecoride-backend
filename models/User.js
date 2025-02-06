@@ -8,17 +8,27 @@ class User extends Account {
     email,
     password,
     account_type = "user",
+    account_status,
     created_at,
     deleted_at,
+    verification_token,
     username,
     photo,
     credits,
     gender,
-    account_status,
     is_driver,
     consent_data_retention
   ) {
-    super(id, email, password, account_type, created_at, deleted_at);
+    super(
+      id,
+      email,
+      password,
+      account_type,
+      account_status,
+      created_at,
+      deleted_at,
+      verification_token
+    );
     this.username = username;
     this.photo = photo;
     this.credits = credits;
@@ -60,7 +70,7 @@ class User extends Account {
       const [results] = await connection
         .promise()
         .query(
-          "SELECT username, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
+          "SELECT username, account_status, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
           [account_id]
         );
 
@@ -76,6 +86,7 @@ class User extends Account {
         SELECT 
           a.id AS account_id, 
           a.email, 
+          a.account_status,
           u.username, 
           u.photo,
           u.credits,
@@ -98,6 +109,7 @@ class User extends Account {
             email: user.email,
             username: user.username,
             photo: user.photo || null,
+            account_status: user.account_status,
             credits: user.credits,
             gender: user.gender,
             is_driver: Boolean(user.is_driver),
