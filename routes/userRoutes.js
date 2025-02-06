@@ -18,7 +18,14 @@ const Driver = require("../models/Driver");
 
 // CREATE - add a user or a driver
 router.post("/create-user", async (req, res) => {
-  const { email, password, username, gender, is_driver } = req.body;
+  const {
+    email,
+    password,
+    username,
+    gender,
+    is_driver,
+    consent_data_retention,
+  } = req.body;
 
   try {
     // Create account
@@ -30,7 +37,8 @@ router.post("/create-user", async (req, res) => {
       accountId,
       username,
       gender,
-      is_driver
+      is_driver,
+      consent_data_retention
     );
 
     // if `is_driver === 1`, create driver inherited from user
@@ -69,20 +77,25 @@ router.get("/user/:id", async (req, res) => {
     if (user.is_driver === 1) {
       driver = await Driver.getDriverById(db, userId);
     }
-
-    // 🔹 Formatage de la réponse
-    return res.status(200).json({
+    console.log(driver);
+    let currentUser = {
       id: account.id,
       email: account.email,
       username: user.username,
+      photo: user.photo,
+      credits: user.credits,
       gender: user.gender,
       is_driver: Boolean(user.is_driver),
-      preferences:
-        {
-          accept_smoking: Boolean(driver.accept_smoking),
-          accept_animals: Boolean(driver.accept_animals),
-        } || null,
-    });
+    };
+    if (driver) {
+      currentUser.preferences = {
+        accept_smoking: Boolean(driver.accept_smoking),
+        accept_animals: Boolean(driver.accept_animals),
+      };
+    }
+
+    // 🔹 Formatage de la réponse
+    return res.status(200).json({ currentUser });
   } catch (error) {
     console.error("Erreur lors de la récupération de l'utilisateur :", error);
     return res.status(500).json({ error: "Erreur serveur" });
@@ -107,7 +120,16 @@ router.put(
   isAuthenticated,
   async (req, res) => {
     const userId = req.params.id;
-    const { username, gender, is_driver } = req.body;
+    const {
+      username,
+      gender,
+      is_driver,
+      email,
+      password,
+      account_status,
+      accept_smoking,
+      accept_animals,
+    } = req.body;
     const photo = req.files?.photo;
     let photoOnCloudinary = "";
     try {
@@ -128,6 +150,10 @@ router.put(
         username,
         gender,
         is_driver,
+        email,
+        password,
+        accept_smoking,
+        accept_animals,
         photoToUpdate,
       });
 

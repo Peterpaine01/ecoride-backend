@@ -6,12 +6,15 @@ class Driver extends User {
     email,
     password,
     account_type = "user",
+    created_at,
+    deleted_at,
     username,
     photo,
     credits,
     gender,
     account_status,
     is_driver,
+    consent_data_retention,
     accept_smoking,
     accept_animals
   ) {
@@ -20,12 +23,15 @@ class Driver extends User {
       email,
       password,
       account_type,
+      created_at,
+      deleted_at,
       username,
       photo,
       credits,
       gender,
       account_status,
-      is_driver
+      is_driver,
+      consent_data_retention
     );
     this.accept_smoking = accept_smoking;
     this.accept_animals = accept_animals;

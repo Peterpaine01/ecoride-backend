@@ -2,16 +2,16 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 
-const decryptEmail = require("../utils/decryptEmail");
-const encryptEmail = require("../utils/encryptEmail");
 const hashPassword = require("../utils/hashPassword");
 
 class Account {
-  constructor(id, email, password, account_type) {
+  constructor(id, email, password, account_type, created_at, deleted_at) {
     this.id = id;
     this.email = email;
     this.password = password;
     this.account_type = account_type;
+    this.created_at = created_at;
+    this.deleted_at = deleted_at;
   }
 
   static async createAccount(connection, email, password) {

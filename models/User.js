@@ -1,34 +1,53 @@
 const Account = require("./Account");
 
+const hashPassword = require("../utils/hashPassword");
+
 class User extends Account {
   constructor(
     id,
     email,
     password,
     account_type = "user",
+    created_at,
+    deleted_at,
     username,
     photo,
     credits,
     gender,
     account_status,
-    is_driver
+    is_driver,
+    consent_data_retention
   ) {
-    super(id, email, password, account_type);
+    super(id, email, password, account_type, created_at, deleted_at);
     this.username = username;
     this.photo = photo;
     this.credits = credits;
     this.gender = gender;
     this.account_status = account_status;
     this.is_driver = is_driver;
+    this.consent_data_retention = consent_data_retention;
   }
 
-  static async createUser(connection, account_id, username, gender, is_driver) {
+  static async createUser(
+    connection,
+    account_id,
+    username,
+    gender,
+    is_driver,
+    consent_data_retention
+  ) {
     try {
       const query =
-        "INSERT INTO users (account_id, username, gender, is_driver) VALUES (?, ?, ?, ?)";
+        "INSERT INTO users (account_id, username, gender, is_driver, consent_data_retention) VALUES (?, ?, ?, ?, ?)";
       const [results] = await connection
         .promise()
-        .query(query, [account_id, username, gender, is_driver]);
+        .query(query, [
+          account_id,
+          username,
+          gender,
+          is_driver,
+          consent_data_retention,
+        ]);
 
       return account_id;
     } catch (err) {
@@ -41,7 +60,7 @@ class User extends Account {
       const [results] = await connection
         .promise()
         .query(
-          "SELECT username, gender, is_driver FROM users WHERE account_id = ?",
+          "SELECT username, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
           [account_id]
         );
 
@@ -58,6 +77,8 @@ class User extends Account {
           a.id AS account_id, 
           a.email, 
           u.username, 
+          u.photo,
+          u.credits,
           u.gender, 
           u.is_driver, 
           d.accept_smoking, 
@@ -76,6 +97,8 @@ class User extends Account {
             id: user.account_id,
             email: user.email,
             username: user.username,
+            photo: user.photo || null,
+            credits: user.credits,
             gender: user.gender,
             is_driver: Boolean(user.is_driver),
             preferences: user.is_driver
@@ -95,19 +118,75 @@ class User extends Account {
 
   static async updateUser(connection, userId, updateData) {
     try {
-      const { username, gender, is_driver, photoToUpdate } = updateData;
+      const {
+        username,
+        gender,
+        is_driver,
+        email,
+        password,
+        accept_smoking,
+        accept_animals,
+        photoToUpdate,
+      } = updateData;
 
-      const query = `
+      const hashedPassword = await hashPassword(password);
+
+      // Mettre à jour la table "accounts"
+      const updateAccountQuery = `
+        UPDATE accounts 
+        SET email = ?, ${hashedPassword ? ", password = ?" : ""} 
+        WHERE id = ?;
+    `;
+
+      const accountParams = hashedPassword
+        ? [email, hashedPassword, userId]
+        : [email, userId];
+
+      await connection.promise().query(updateAccountQuery, accountParams);
+
+      const updateUserQuery = `
         UPDATE users 
         SET username = ?, gender = ?, is_driver = ?, photo = ?
         WHERE account_id = ?;
       `;
 
-      const [result] = await connection
+      await connection
         .promise()
-        .query(query, [username, gender, is_driver, photoToUpdate, userId]);
+        .query(updateUserQuery, [
+          username,
+          gender,
+          is_driver,
+          photoToUpdate,
+          userId,
+        ]);
 
-      return result;
+      const checkDriverQuery = `SELECT * FROM drivers WHERE user_id = ?`;
+      const [existingDriver] = await connection
+        .promise()
+        .query(checkDriverQuery, [userId]);
+
+      if (existingDriver.length === 0) {
+        console.log("Ajout d'un conducteur...");
+        const insertDriverQuery = `
+                INSERT INTO drivers (user_id, accept_smoking, accept_animals)
+                VALUES (?, ?, ?);
+            `;
+        await connection
+          .promise()
+          .query(insertDriverQuery, [userId, accept_smoking, accept_animals]);
+      } else {
+        console.log("Mise à jour du conducteur...");
+        const updateDriverQuery = `
+                UPDATE drivers 
+                SET accept_smoking = ?, accept_animals = ?
+                WHERE user_id = ?;
+            `;
+        await connection
+          .promise()
+          .query(updateDriverQuery, [accept_smoking, accept_animals, userId]);
+      }
+
+      return { message: "Utilisateur mis à jour avec succès" };
     } catch (err) {
       throw err;
     }

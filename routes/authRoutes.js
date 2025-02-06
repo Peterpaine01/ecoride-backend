@@ -2,8 +2,6 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/mysql");
 
-const decryptEmail = require("../utils/decryptEmail");
-
 // Import models
 const Account = require("../models/Account");
 
