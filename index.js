@@ -14,6 +14,7 @@ app.use(express.json());
 
 // use routes
 app.use(require("./routes/userRoutes"));
+app.use(require("./routes/authRoutes"));
 
 const PORT = process.env.PORT || 5000;
 

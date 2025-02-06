@@ -62,14 +62,19 @@ class Driver extends User {
     }
   }
 
-  static getDriverById(connection, id, callback) {
-    const query = "SELECT * FROM drivers WHERE user_id = ?";
-    connection.query(query, [id], (err, results) => {
-      if (err) {
-        return callback(err, null);
-      }
-      callback(null, results[0]);
-    });
+  static async getDriverById(connection, user_id) {
+    try {
+      const [results] = await connection
+        .promise()
+        .query(
+          "SELECT accept_smoking, accept_animals FROM drivers WHERE user_id = ?",
+          [user_id]
+        );
+
+      return results.length > 0 ? results[0] : null;
+    } catch (err) {
+      throw err;
+    }
   }
 }
 
