@@ -17,6 +17,7 @@ app.use(require("./routes/userRoutes"));
 app.use(require("./routes/authRoutes"));
 app.use(require("./routes/carRoutes"));
 app.use(require("./routes/rideRoutes"));
+app.use(require("./routes/bookingRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
