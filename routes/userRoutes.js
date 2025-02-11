@@ -89,4 +89,66 @@ router.get("/user/:id", async (req, res) => {
   }
 });
 
+// READ - Get all users
+router.get("/users", async (req, res) => {
+  try {
+    const users = await User.getAllUsers();
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error("Error while recovering users :" + error);
+    return res.status(500).json({ message: "Error server" + error.message });
+  }
+});
+
+// UPDATE - update a user
+router.put(
+  "/update-user/:id",
+  fileUpload(),
+  authenticateToken,
+  async (req, res) => {
+    const userId = req.params.id;
+    const {
+      username,
+      gender,
+      is_driver,
+      email,
+      password,
+      accept_smoking,
+      accept_animals,
+    } = req.body;
+    const photo = req.files?.photo;
+    let photoOnCloudinary = "";
+    try {
+      if (photo) {
+        // transforming image in string readable by cloudinary
+        const transformedPicture = convertToBase64(photo);
+        // sending request to cloudianry for uploading my image
+        const result = await cloudinary.uploader.upload(transformedPicture, {
+          folder: `ecoride/users/user-${userId}`,
+        });
+
+        photoOnCloudinary = result;
+      }
+      console.log(photoOnCloudinary.secure_url);
+      const photoToUpdate = photoOnCloudinary.secure_url;
+
+      await User.updateUser(userId, {
+        username,
+        gender,
+        is_driver,
+        email,
+        password,
+        accept_smoking,
+        accept_animals,
+        photoToUpdate,
+      });
+
+      return res.status(200).json({ message: "User updated successfully" });
+    } catch (error) {
+      console.error("Error while updating user :" + error);
+      return res.status(500).json({ message: "Error server" + error.message });
+    }
+  }
+);
+
 module.exports = router;

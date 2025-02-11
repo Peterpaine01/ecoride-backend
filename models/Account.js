@@ -1,6 +1,12 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const db = require("../config/mysql");
+
+const hashPassword = require("../utils/hashPassword");
 
 class Account {
   constructor(
@@ -42,9 +48,91 @@ class Account {
       await Account.sendVerificationEmail(email, verificationToken);
 
       return results.insertId;
-    } catch (err) {
-      console.error("Erreur lors de la création du compte :", err);
+    } catch (error) {
+      console.error("Error while creating account:" + error);
       throw err;
+    }
+  }
+
+  static async sendVerificationEmail(email, token) {
+    let transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false, // false for TLS
+      auth: {
+        user: "burley.bode10@ethereal.email", // user Ethereal
+        pass: "uKPZ5DjVXVgUXAAeEb", // pass Ethereal
+      },
+    });
+
+    const verificationUrl = `${process.env.BACK_URL}/user/verify/${token}`;
+
+    const mailOptions = {
+      from: '"Test App" <no-reply@test.com>',
+      to: email,
+      subject: "Vérification de votre compte",
+      html: `
+      <h1>Bienvenue sur Ecoride !</h1>
+      <p>Votre compte a bien été créé et <strong>20 crédits</strong> vous ont été attribué automatiquement. Vous pouvez désormais les utiliser pour voyager à travers toute la France !</p>
+        <p>Avant de commencer à les utiliser, cliquez sur le lien pour activer votre compte :</p>
+        <a href="${verificationUrl}">${verificationUrl}</a>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log("Email envoyé à " + email);
+    } catch (error) {
+      console.error("Erreur d'envoi d'email :", error);
+    }
+  }
+
+  static async login(email, password) {
+    try {
+      console.log(email);
+
+      const query = "SELECT * FROM accounts WHERE email = ?";
+      const [results] = await db.query(query, [email]);
+
+      if (results.length === 0) {
+        throw new Error("Account not found");
+      }
+
+      const account = results[0];
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, account.password);
+      if (!isMatch) {
+        throw new Error("Incorrect password");
+      }
+
+      // Create token JWT
+      const token = jwt.sign(
+        { id: account.id, email: account.email },
+        process.env.JWT_KEY
+      );
+
+      // Return token and user id
+      return { token, userId: account.id };
+    } catch (err) {
+      console.error("Error while trying to connect:", err);
+      throw err;
+    }
+  }
+
+  static async getAccountById(id) {
+    try {
+      const [results] = await db.query(
+        "SELECT id, email FROM accounts WHERE id = ?",
+        [id]
+      );
+
+      if (results.length === 0) return null;
+
+      const account = results[0];
+      return account;
+    } catch (error) {
+      throw error;
     }
   }
 }

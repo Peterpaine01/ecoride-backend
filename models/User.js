@@ -56,8 +56,150 @@ class User extends Account {
       ]);
 
       return account_id;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getUserById(account_id) {
+    try {
+      const [results] = await db.query(
+        "SELECT username, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
+        [account_id]
+      );
+
+      return results.length > 0 ? results[0] : null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAllUsers() {
+    try {
+      const query = `
+        SELECT 
+          a.id AS account_id, 
+          a.email, 
+          a.account_status,
+          u.username, 
+          u.photo,
+          u.credits,
+          u.gender, 
+          u.is_driver, 
+          d.accept_smoking, 
+          d.accept_animals
+        FROM accounts a
+        JOIN users u ON a.id = u.account_id
+        LEFT JOIN drivers d ON u.account_id = d.user_id
+        ORDER BY u.username ASC
+      `;
+
+      const [results] = await db.query(query);
+
+      const users = await Promise.all(
+        results.map(async (user) => {
+          return {
+            id: user.account_id,
+            email: user.email,
+            username: user.username,
+            photo: user.photo || null,
+            account_status: user.account_status,
+            credits: user.credits,
+            gender: user.gender,
+            is_driver: Boolean(user.is_driver),
+            preferences: user.is_driver
+              ? {
+                  accept_smoking: Boolean(user.accept_smoking),
+                  accept_animals: Boolean(user.accept_animals),
+                }
+              : null,
+          };
+        })
+      );
+      return users;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updateUser(userId, updateData) {
+    try {
+      const {
+        username,
+        gender,
+        is_driver,
+        email,
+        password,
+        accept_smoking,
+        accept_animals,
+        photoToUpdate,
+      } = updateData;
+
+      const hashedPassword = await hashPassword(password);
+
+      // Update accounts table (SQL)
+      const updateAccountQuery = `
+        UPDATE accounts 
+        SET email = ?${hashedPassword ? ", password = ?" : ""} 
+        WHERE id = ?;
+    `;
+
+      const accountParams = hashedPassword
+        ? [email, hashedPassword, userId]
+        : [email, userId];
+
+      await db.query(updateAccountQuery, accountParams);
+
+      // Update users table (SQL)
+      const updateUserQuery = `
+        UPDATE users 
+        SET username = ?, gender = ?, is_driver = ?, photo = ?
+        WHERE account_id = ?;
+      `;
+
+      await db.query(updateUserQuery, [
+        username,
+        gender,
+        is_driver,
+        photoToUpdate,
+        userId,
+      ]);
+
+      // Insert or update drivers table (SQL)
+      const checkDriverQuery = `SELECT * FROM drivers WHERE user_id = ?`;
+      const [existingDriver] = await db.query(checkDriverQuery, [userId]);
+
+      // Check if driver already exist
+      if (existingDriver.length === 0) {
+        // if driver doesn't exist in drivers table, insert
+        console.log("Adding driver...");
+        const insertDriverQuery = `
+                INSERT INTO drivers (user_id, accept_smoking, accept_animals)
+                VALUES (?, ?, ?);
+            `;
+        await db.query(insertDriverQuery, [
+          userId,
+          accept_smoking,
+          accept_animals,
+        ]);
+      } else {
+        // if driver already exists in drivers table, update
+        console.log("updating driver...");
+        const updateDriverQuery = `
+                UPDATE drivers 
+                SET accept_smoking = ?, accept_animals = ?
+                WHERE user_id = ?;
+            `;
+        await db.query(updateDriverQuery, [
+          accept_smoking,
+          accept_animals,
+          userId,
+        ]);
+      }
+
+      return { message: "User updated successfully" };
+    } catch (error) {
+      throw error;
     }
   }
 }
