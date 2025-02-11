@@ -1,7 +1,6 @@
 const express = require("express");
 require("dotenv").config();
 
-const fileUpload = require("express-fileupload");
 const cors = require("cors");
 require("./config/mysql");
 require("./config/mongodb");
@@ -17,6 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(require("./routes/userRoutes"));
 app.use(require("./routes/authRoutes"));
 app.use(require("./routes/carRoutes"));
+app.use(require("./routes/rideRoutes"));
 
 const PORT = process.env.PORT || 5000;
 
