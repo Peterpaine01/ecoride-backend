@@ -71,8 +71,8 @@ class Driver extends User {
       await db.query(query, [user_id]);
 
       return user_id;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -91,8 +91,8 @@ class Driver extends User {
       driver.accept_animals = Boolean(driver.accept_animals);
 
       return driver;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 }
