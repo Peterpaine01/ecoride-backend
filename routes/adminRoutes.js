@@ -104,10 +104,10 @@ router.put("/update-staff-member/:id", authenticate, async (req, res) => {
     await StaffMembers.updateStaffMember(staffId, updateData);
     res.status(200).json({ message: "Staff member updated successfully" });
   } catch (error) {
-    console.error("Error updating staff member:", error);
+    console.error("Error updating staff member: " + error);
     res
       .status(500)
-      .json({ message: "Error updating staff member", error: error.message });
+      .json({ message: "Error updating staff member: " + error.message });
   }
 });
 

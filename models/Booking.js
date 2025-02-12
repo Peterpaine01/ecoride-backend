@@ -136,6 +136,86 @@ class BookingModel {
     }
   }
 
+  static async getBookingsByUser(userId) {
+    try {
+      const bookings = await Booking.find({
+        "passenger.passengerId": userId,
+      }).populate("ride");
+
+      if (!bookings || bookings.length === 0) {
+        throw new Error("No booking found for this user");
+      }
+
+      // Get driver infos from drivers table (SQL)
+      for (let booking of bookings) {
+        if (booking.driver && booking.driver.driverId) {
+          const [driverResults] = await db.query(
+            `SELECT * FROM drivers WHERE id = ?`,
+            [booking.driver.driverId]
+          );
+          booking.driver = driverResults[0] || null; // Add car if car found
+        }
+      }
+
+      return bookings;
+    } catch (error) {
+      console.error("Error while recovering user's bookings :" + error);
+      throw new Error(
+        "Error while recovering user's bookings : " + error.message
+      );
+    }
+  }
+
+  // update Booking
+  static async updateBooking(bookingId, updateData) {
+    try {
+      const updatedBooking = await Booking.findByIdAndUpdate(
+        bookingId,
+        updateData,
+        {
+          new: true,
+        }
+      );
+
+      if (!updatedBooking) {
+        throw new Error("Booking not found");
+      }
+
+      // If bookingStatus === 'canceled'
+      if (updateData.bookingStatus === "canceled") {
+        const ride = await Ride.findById(updatedBooking.ride);
+
+        if (ride) {
+          // Hand over available seats
+          ride.availableSeats += updatedBooking.bookingDetails.seats;
+
+          // Withdraw booking id from ride -> if b === id, exclude from array
+          ride.bookings = ride.bookings.filter((b) => b.toString() !== id);
+          await ride.save();
+        }
+
+        // Credit again passenger
+        const passengerId = updatedBooking.bookingDetails.passenger.passengerId;
+        const refundCredits =
+          ride.creditsPerPassenger * updatedBooking.bookingDetails.seats;
+
+        // Update passenger's credits in table users (SQL)
+        await db.query("UPDATE users SET credits = credits + ? WHERE id = ?", [
+          refundCredits,
+          passengerId,
+        ]);
+      }
+
+      res.status(200).json({
+        message: "Booking updated successfully",
+        booking: updatedBooking,
+      });
+    } catch (error) {
+      console.error("Error while updating user's booking:" + error);
+      throw new Error("Error while updating user's booking: " + error.message);
+    }
+  }
+
   static async updateBookingsAndNotifyPassengers(rideId, bookingStatus) {
     try {
       // Get all bookings with rideId

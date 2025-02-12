@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const hashPassword = async (password) => {
   const saltRounds = 10; // set hash complexity
   if (!password) {
-    throw new Error("Le mot de passe ne peut pas être vide.");
+    throw new Error("Password can't be empty");
   }
   return await bcrypt.hash(password, saltRounds);
 };

@@ -100,7 +100,7 @@ router.get("/ride/:id", async (req, res) => {
 
     res.status(200).json(rideWithDetails);
   } catch (error) {
-    res.status(500).json({ message: "Server error " + error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
@@ -129,9 +129,7 @@ router.put("/update-ride/:id", authenticateToken, async (req, res) => {
     const bookingStatus = updateData.rideStatus;
 
     if (updateData.rideStatus) {
-      console.log(
-        `Ride ${rideId} status has been updated. Updating related bookings...`
-      );
+      console.log(`Ride ${rideId} is completed. Updating related bookings...`);
       await BookingModel.updateBookingsAndNotifyPassengers(
         rideId,
         bookingStatus
@@ -142,10 +140,38 @@ router.put("/update-ride/:id", authenticateToken, async (req, res) => {
       .status(200)
       .json({ message: "Ride updated successfully", ride: updatedRide });
   } catch (error) {
-    console.error("Error updating ride :" + error);
-    res.status(500).json({ message: "Server error " + error.message });
+    console.error("Error while updating ride :" + error);
+    res.status(500).json({ message: "Server error" + error.message });
   }
 });
+
+// router.put("/update-ride-status/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const { status } = req.body;
+
+//   try {
+//     // Vérifier si le ride existe
+//     const ride = await Ride.findById(id);
+//     if (!ride) {
+//       return res.status(404).json({ message: "Ride not found" });
+//     }
+
+//     // Mettre à jour le statut du ride
+//     ride.status = status;
+//     await ride.save();
+
+//     // Si le ride est "completed", mettre à jour les bookings associés et envoyer un email
+//     if (status === "completed") {
+//       console.log(`Ride ${id} is completed. Updating related bookings...`);
+//       await updateBookingsAndNotifyPassengers(id);
+//     }
+
+//     res.status(200).json({ message: "Ride status updated successfully" });
+//   } catch (error) {
+//     console.error("Error updating ride status:", error);
+//     res.status(500).json({ message: "Error updating ride status", error: error.message });
+//   }
+// });
 
 router.get("/driver-rides", authenticateToken, async (req, res) => {
   try {
@@ -159,7 +185,8 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
     if (driverResults.length === 0) {
       return res.status(403).json({
-        message: "Acces denied : you must be a driver to see yours rides",
+        message:
+          "Accès refusé : vous devez être un conducteur pour voir vos trajets",
       });
     }
 
@@ -168,22 +195,28 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: "Rides recovered successfully", rides });
   } catch (error) {
-    console.error("Error recovering rides :" + error);
-    res.status(500).json({ message: "Server error " + error.message });
+    console.error("Error while recovering rides :" + error);
+    res.status(500).json({ message: "Server error" + error.message });
   }
 });
 
 router.get("/search-rides", async (req, res) => {
   try {
-    const searchData = req.query;
+    const { departureCity, destinationCity, availableSeats, departureDate } =
+      req.query;
 
     console.log(req.query);
 
-    const rides = await RideModel.getRides(searchData);
+    const rides = await RideModel.getRides({
+      departureCity,
+      destinationCity,
+      availableSeats,
+      departureDate,
+    });
 
     if (rides.length === 0) {
       return res.status(404).json({
-        message: "No ride found according to these criteria.",
+        message: "Aucun trajet trouvé avec ces critères.",
       });
     }
 
@@ -192,8 +225,8 @@ router.get("/search-rides", async (req, res) => {
       rides,
     });
   } catch (error) {
-    console.error("Error recovering rides :" + error);
-    res.status(500).json({ message: "Server error " + error.message });
+    console.error("Error while recovering rides :" + error);
+    res.status(500).json({ message: "Server error" + error.message });
   }
 });
 

@@ -1,4 +1,5 @@
 const User = require("./User");
+const { Review, ReviewModel } = require("./Review");
 
 const db = require("../config/mysql");
 
@@ -69,6 +70,9 @@ class Driver extends User {
       const query = "INSERT INTO drivers (user_id) VALUES (?)";
       await db.query(query, [user_id]);
 
+      // Set summary into table reviews_summaries
+      await ReviewModel.setSummary(user_id);
+
       return user_id;
     } catch (error) {
       throw error;
@@ -88,6 +92,22 @@ class Driver extends User {
       let driver = driverResults[0];
       driver.accept_smoking = Boolean(driver.accept_smoking);
       driver.accept_animals = Boolean(driver.accept_animals);
+
+      // Get driver's reviews summary from reviews_summaries table (SQL)
+      const [reviewResults] = await db.query(
+        `SELECT average_rating, total_reviews 
+         FROM reviews_summaries 
+         WHERE driver_id = ?`,
+        [user_id]
+      );
+
+      if (reviewResults.length > 0) {
+        driver.average_rating = reviewResults[0].average_rating || 0;
+        driver.total_reviews = reviewResults[0].total_reviews || 0;
+      } else {
+        driver.average_rating = 0;
+        driver.total_reviews = 0;
+      }
 
       return driver;
     } catch (error) {

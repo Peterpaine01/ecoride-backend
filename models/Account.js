@@ -50,7 +50,7 @@ class Account {
       return results.insertId;
     } catch (error) {
       console.error("Error while creating account:" + error);
-      throw err;
+      throw error;
     }
   }
 
@@ -65,25 +65,26 @@ class Account {
       },
     });
 
-    const verificationUrl = `${process.env.BACK_URL}/user/verify/${token}`;
+    const verificationUrl = `${process.env.BACK_URL}:${process.env.PORT}/user/verify/${token}`;
+    const redirectUrl = `${process.env.FRONT_URL}/valider-mon-compte/${token}`;
 
     const mailOptions = {
-      from: '"Test App" <no-reply@test.com>',
+      from: '"Ecoride" <hello@ecoride.com>',
       to: email,
       subject: "Vérification de votre compte",
       html: `
       <h1>Bienvenue sur Ecoride !</h1>
       <p>Votre compte a bien été créé et <strong>20 crédits</strong> vous ont été attribué automatiquement. Vous pouvez désormais les utiliser pour voyager à travers toute la France !</p>
         <p>Avant de commencer à les utiliser, cliquez sur le lien pour activer votre compte :</p>
-        <a href="${verificationUrl}">${verificationUrl}</a>
+        <a href="${redirectUrl}">Activer mon compte</a>
       `,
     };
 
     try {
       await transporter.sendMail(mailOptions);
-      console.log("Email envoyé à " + email);
+      console.log("Email send to " + email);
     } catch (error) {
-      console.error("Erreur d'envoi d'email :", error);
+      console.error("Error while sending email:" + error);
     }
   }
 

@@ -68,7 +68,7 @@ const isAdmin = async (req, res, next) => {
     req.user.isAdmin = true;
     next();
   } catch (error) {
-    console.error("Error checking admin role:" + error);
+    console.error("Error checking admin role: " + error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

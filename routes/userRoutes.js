@@ -18,6 +18,7 @@ const convertToBase64 = require("../utils/convertToBase64");
 const Account = require("../models/Account");
 const User = require("../models/User");
 const Driver = require("../models/Driver");
+const Car = require("../models/Car");
 
 // CREATE - add a user or a driver
 router.post("/create-user", async (req, res) => {

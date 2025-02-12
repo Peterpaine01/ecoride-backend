@@ -59,8 +59,8 @@ class User extends Account {
       ]);
 
       return account_id;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -198,7 +198,6 @@ class User extends Account {
           accept_animals,
           userId,
         ]);
-        s;
       }
 
       return { message: "User updated successfully" };

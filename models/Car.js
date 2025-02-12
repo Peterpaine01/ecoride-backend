@@ -1,4 +1,4 @@
-const db = require("../config/mysql");
+const db = require("../config/mysql"); // Connexion MySQL
 
 class Car {
   constructor(
