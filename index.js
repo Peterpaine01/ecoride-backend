@@ -22,6 +22,7 @@ app.use(require("./routes/reviewRoutes"));
 app.use(require("./routes/adminRoutes"));
 
 const PORT = process.env.PORT || 5000;
+console.log(`Server running on port: ${PORT}`);
 
 // -------- SET UP ----------
 
@@ -30,7 +31,11 @@ app.all("*", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Server Node.js running !");
+  res
+    .status(200)
+    .json({ message: "Server Node.js running! Welcome to Ecoride project!" });
 });
 
-app.listen(PORT, () => console.log(`Server running on port: ${PORT}`));
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(`Server running on port: ${PORT}`)
+);
