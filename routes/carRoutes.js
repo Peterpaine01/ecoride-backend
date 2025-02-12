@@ -5,7 +5,11 @@ const router = express.Router();
 const Car = require("../models/Car");
 
 // Import middleware authenticateToken
-const authenticateToken = require("../middlewares/authenticateToken");
+const {
+  authenticateToken,
+  isStaffMember,
+  isAdmin,
+} = require("../middlewares/authenticateToken");
 
 // CREATE - Add a car
 router.post("/create-car", authenticateToken, async (req, res) => {

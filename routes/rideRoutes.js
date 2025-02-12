@@ -11,7 +11,11 @@ const Driver = require("../models/Driver");
 const Car = require("../models/Car");
 
 // Import middleware authenticateToken
-const authenticateToken = require("../middlewares/authenticateToken");
+const {
+  authenticateToken,
+  isStaffMember,
+  isAdmin,
+} = require("../middlewares/authenticateToken");
 
 router.post("/create-ride", authenticateToken, async (req, res) => {
   try {

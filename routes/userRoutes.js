@@ -5,7 +5,11 @@ const router = express.Router();
 const fileUpload = require("express-fileupload");
 
 // Import middleware authenticateToken
-const authenticateToken = require("../middlewares/authenticateToken");
+const {
+  authenticateToken,
+  isStaffMember,
+  isAdmin,
+} = require("../middlewares/authenticateToken");
 
 const cloudinary = require("cloudinary").v2;
 const convertToBase64 = require("../utils/convertToBase64");
