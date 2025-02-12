@@ -26,6 +26,17 @@ console.log(`Server running on port: ${PORT}`);
 
 // -------- SET UP ----------
 
+const axios = require("axios");
+
+axios
+  .get("https://api64.ipify.org?format=json")
+  .then((response) => {
+    console.log(`🌍 IP publique du serveur: ${response.data.ip}`);
+  })
+  .catch((error) => {
+    console.error("❌ Impossible de récupérer l'IP publique", error);
+  });
+
 app.all("*", (req, res) => {
   res.status(404).json({ message: "This route does not exist" });
 });
