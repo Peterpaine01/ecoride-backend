@@ -23,7 +23,6 @@ async function testConnection() {
   }
 }
 
-// Appel de la fonction pour tester la connexion
 testConnection();
 
 module.exports = db;
