@@ -76,4 +76,63 @@ router.get(
   }
 );
 
+// Get Staff members -> need to be 'administrator'
+router.get("/staff-members", authenticate, isAdmin, async (req, res) => {
+  try {
+    const staffMembers = await StaffMembers.getAllStaffMembers();
+    res.status(200).json(staffMembers);
+  } catch (error) {
+    console.error("Error fetching staff members: " + error);
+    res
+      .status(500)
+      .json({ message: "Error fetching staff members: " + error.message });
+  }
+});
+
+// Update Staff member
+router.put("/update-staff-member/:id", authenticate, async (req, res) => {
+  const staffId = req.params.id;
+  const updateData = req.body;
+
+  if (req.user.id !== parseInt(staffId)) {
+    return res
+      .status(403)
+      .json({ message: "Unauthorized to update this staff member" });
+  }
+
+  try {
+    await StaffMembers.updateStaffMember(staffId, updateData);
+    res.status(200).json({ message: "Staff member updated successfully" });
+  } catch (error) {
+    console.error("Error updating staff member:", error);
+    res
+      .status(500)
+      .json({ message: "Error updating staff member", error: error.message });
+  }
+});
+
+// Delete Staff member -> need to be 'administrator'
+router.put(
+  "/delete-staff-member/:id",
+  authenticate,
+  isAdmin,
+  async (req, res) => {
+    const staffId = req.params.id;
+    try {
+      await db.query("DELETE FROM staff_members WHERE account_id = ?", [
+        staffId,
+      ]);
+
+      await db.query("DELETE FROM accounts WHERE id = ?", [staffId]);
+
+      res.status(200).json({ message: "Staff member deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting staff member: " + error);
+      res
+        .status(500)
+        .json({ message: "Error deleting staff member: " + error.message });
+    }
+  }
+);
+
 module.exports = router;

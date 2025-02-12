@@ -6,6 +6,7 @@ const mongoose = require("../config/mongodb");
 
 // Import models
 const { Ride, RideModel } = require("../models/Ride");
+const { Booking, BookingModel } = require("../models/Booking");
 const User = require("../models/User");
 const Driver = require("../models/Driver");
 const Car = require("../models/Car");
@@ -99,7 +100,7 @@ router.get("/ride/:id", async (req, res) => {
 
     res.status(200).json(rideWithDetails);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({ message: "Server error " + error.message });
   }
 });
 
@@ -124,12 +125,25 @@ router.put("/update-ride/:id", authenticateToken, async (req, res) => {
     // Update ride
     const updatedRide = await RideModel.updateRide(rideId, updateData);
 
+    // If rideStatus === "completed", update related bookings and send mail
+    const bookingStatus = updateData.rideStatus;
+
+    if (updateData.rideStatus) {
+      console.log(
+        `Ride ${rideId} status has been updated. Updating related bookings...`
+      );
+      await BookingModel.updateBookingsAndNotifyPassengers(
+        rideId,
+        bookingStatus
+      );
+    }
+
     res
       .status(200)
       .json({ message: "Ride updated successfully", ride: updatedRide });
   } catch (error) {
-    console.error("Error while updating ride :" + error);
-    res.status(500).json({ message: "Server error" + error.message });
+    console.error("Error updating ride :" + error);
+    res.status(500).json({ message: "Server error " + error.message });
   }
 });
 
@@ -145,8 +159,7 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
     if (driverResults.length === 0) {
       return res.status(403).json({
-        message:
-          "Accès refusé : vous devez être un conducteur pour voir vos trajets",
+        message: "Acces denied : you must be a driver to see yours rides",
       });
     }
 
@@ -155,28 +168,22 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: "Rides recovered successfully", rides });
   } catch (error) {
-    console.error("Error while recovering rides :" + error);
-    res.status(500).json({ message: "Server error" + error.message });
+    console.error("Error recovering rides :" + error);
+    res.status(500).json({ message: "Server error " + error.message });
   }
 });
 
 router.get("/search-rides", async (req, res) => {
   try {
-    const { departureCity, destinationCity, availableSeats, departureDate } =
-      req.query;
+    const searchData = req.query;
 
     console.log(req.query);
 
-    const rides = await RideModel.getRides({
-      departureCity,
-      destinationCity,
-      availableSeats,
-      departureDate,
-    });
+    const rides = await RideModel.getRides(searchData);
 
     if (rides.length === 0) {
       return res.status(404).json({
-        message: "Aucun trajet trouvé avec ces critères.",
+        message: "No ride found according to these criteria.",
       });
     }
 
@@ -185,8 +192,8 @@ router.get("/search-rides", async (req, res) => {
       rides,
     });
   } catch (error) {
-    console.error("Error while recovering rides :" + error);
-    res.status(500).json({ message: "Server error" + error.message });
+    console.error("Error recovering rides :" + error);
+    res.status(500).json({ message: "Server error " + error.message });
   }
 });
 

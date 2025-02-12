@@ -38,7 +38,7 @@ const isStaffMember = async (req, res, next) => {
     req.user.isStaff = true;
     next();
   } catch (error) {
-    console.error("Error checking staff member:" + error);
+    console.error("Error checking staff member: " + error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

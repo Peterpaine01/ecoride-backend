@@ -97,7 +97,7 @@ class StaffMembers extends Account {
     }
   }
 
-  static async updateUser(userId, updateData) {
+  static async updateStaffMembers(userId, updateData) {
     try {
       const {
         firstname,

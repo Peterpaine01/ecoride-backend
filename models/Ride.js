@@ -72,7 +72,7 @@ class RideModel {
       });
       return await newRide.save();
     } catch (error) {
-      throw new Error("Error while creating ride: " + error.message);
+      throw new Error("Error creating ride: " + error.message);
     }
   }
 
@@ -109,21 +109,22 @@ class RideModel {
 
       return rides;
     } catch (error) {
-      console.error("Error while getting rides:" + error);
-      throw new Error("Error while getting rides: " + error.message);
+      console.error("Error fetching rides:" + error);
+      throw new Error("Error fetching rides: " + error.message);
     }
   }
 
-  static async getRides({
-    departureCity,
-    destinationCity,
-    availableSeats,
-    departureDate,
-    maxCreditsPerPassenger,
-    maxDuration,
-    isElectric,
-    minDriverRating,
-  }) {
+  static async getRides(searchData) {
+    const {
+      departureCity,
+      destinationCity,
+      availableSeats,
+      departureDate,
+      maxCreditsPerPassenger,
+      maxDuration,
+      isElectric,
+      minDriverRating,
+    } = searchData;
     try {
       // Build the filters according to the criteria passed as params
       const filter = {};
@@ -223,7 +224,7 @@ class RideModel {
 
       return { count, rides };
     } catch (error) {
-      throw new Error("Error while getting rides: " + error.message);
+      throw new Error("Error fetching rides: " + error.message);
     }
   }
 
@@ -240,8 +241,8 @@ class RideModel {
 
       return updatedRide;
     } catch (error) {
-      console.error("Error while updating ride:" + error);
-      throw new Error("Error while updating ride:" + error.message);
+      console.error("Error updating ride:" + error);
+      throw new Error("Error updating ride:" + error.message);
     }
   }
 
@@ -250,7 +251,7 @@ class RideModel {
     try {
       return await Ride.findByIdAndDelete(rideId);
     } catch (error) {
-      throw new Error("Error while deleting ride: " + error.message);
+      throw new Error("Error deleting ride: " + error.message);
     }
   }
 }

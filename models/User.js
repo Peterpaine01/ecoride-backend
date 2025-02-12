@@ -1,4 +1,7 @@
 const Account = require("./Account");
+
+const hashPassword = require("../utils/hashPassword");
+
 const db = require("../config/mysql");
 
 class User extends Account {
@@ -195,6 +198,7 @@ class User extends Account {
           accept_animals,
           userId,
         ]);
+        s;
       }
 
       return { message: "User updated successfully" };
