@@ -46,7 +46,7 @@ router.post(
 // Read staff members by id -> need to be a staff member
 router.get(
   "/staff-member/:id",
-  authenticate,
+  authenticateToken,
   isStaffMember,
   async (req, res) => {
     const staffId = req.params.id;
@@ -77,7 +77,7 @@ router.get(
 );
 
 // Get Staff members -> need to be 'administrator'
-router.get("/staff-members", authenticate, isAdmin, async (req, res) => {
+router.get("/staff-members", authenticateToken, isAdmin, async (req, res) => {
   try {
     const staffMembers = await StaffMembers.getAllStaffMembers();
     res.status(200).json(staffMembers);
@@ -90,7 +90,7 @@ router.get("/staff-members", authenticate, isAdmin, async (req, res) => {
 });
 
 // Update Staff member
-router.put("/update-staff-member/:id", authenticate, async (req, res) => {
+router.put("/update-staff-member/:id", authenticateToken, async (req, res) => {
   const staffId = req.params.id;
   const updateData = req.body;
 
@@ -114,7 +114,7 @@ router.put("/update-staff-member/:id", authenticate, async (req, res) => {
 // Delete Staff member -> need to be 'administrator'
 router.put(
   "/delete-staff-member/:id",
-  authenticate,
+  authenticateToken,
   isAdmin,
   async (req, res) => {
     const staffId = req.params.id;
