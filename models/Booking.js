@@ -135,6 +135,60 @@ class BookingModel {
       throw new Error("Booking not found: " + error.message);
     }
   }
+
+  static async updateBookingsAndNotifyPassengers(rideId, bookingStatus) {
+    try {
+      // Get all bookings with rideId
+      const bookings = await Booking.find({ ride: rideId });
+      console.log(bookings);
+
+      if (bookings.length === 0) {
+        console.log("No bookings found for this ride:" + rideId);
+        return;
+      }
+
+      // Update every booking found and send email to passenger
+      for (const booking of bookings) {
+        booking.bookingStatus = bookingStatus;
+        await booking.save();
+
+        const bookingId = booking._id;
+
+        // Get passenger's infos
+        const passengerId = booking.bookingDetails.passenger.passengerId;
+        const passengerAccount = await Account.getAccountById(passengerId);
+        const passengerDetails = await User.getUserById(passengerId);
+
+        const passengerData = {
+          passengerId,
+          email: passengerAccount.email,
+          username: passengerDetails.username,
+        };
+
+        // Send notification email according to booking status
+        await sendNotificationRideEmail(
+          passengerData,
+          rideId,
+          bookingStatus,
+          bookingId
+        );
+      }
+
+      console.log("All passengers have been notified.");
+    } catch (error) {
+      console.error("Error updating bookings and notifying passengers:", error);
+    }
+  }
+
+  // Delete Booking
+  static async deleteBooking(bookingId) {
+    try {
+      return await Booking.findByIdAndDelete(bookingId);
+    } catch (error) {
+      console.error("Error while deleting booking :" + error);
+      throw new Error("Error while deleting booking : " + error.message);
+    }
+  }
 }
 
 // Export model Booking and class BookingModel

@@ -89,4 +89,39 @@ router.get("/booking/:id", async (req, res) => {
   }
 });
 
+router.put("/update-booking/:id", async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+
+  try {
+    const updatedBooking = await BookingModel.updateBooking(id, updateData);
+
+    res.status(200).json(updatedBooking);
+  } catch (error) {
+    console.error("Error while updating booking: " + error);
+    res
+      .status(500)
+      .json({ message: "Error while updating booking:" + error.message });
+  }
+});
+
+router.delete("/delete-booking/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedBooking = await BookingModel.deleteBooking(id);
+
+    if (!deletedBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.status(200).json({ message: "Booking deleted successfully" });
+  } catch (error) {
+    console.error("Error while deleting booking: " + error);
+    res
+      .status(500)
+      .json({ message: "Error while deleting booking:" + error.message });
+  }
+});
+
 module.exports = router;
