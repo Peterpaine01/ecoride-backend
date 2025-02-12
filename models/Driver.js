@@ -1,5 +1,4 @@
 const User = require("./User");
-const { Review, ReviewModel } = require("./Review");
 
 const db = require("../config/mysql");
 
