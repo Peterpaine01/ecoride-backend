@@ -124,6 +124,8 @@ class RideModel {
       maxDuration,
       isElectric,
       minDriverRating,
+      acceptSmoking,
+      acceptAnimals,
     } = searchData;
     try {
       // Build the filters according to the criteria passed as params
