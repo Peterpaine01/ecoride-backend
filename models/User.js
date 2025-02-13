@@ -67,7 +67,7 @@ class User extends Account {
   static async getUserById(account_id) {
     try {
       const [results] = await db.query(
-        "SELECT username, photo, credits, gender, is_driver, account_status FROM users WHERE account_id = ?",
+        "SELECT username, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
         [account_id]
       );
 

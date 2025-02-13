@@ -124,7 +124,7 @@ class Account {
   static async getAccountById(id) {
     try {
       const [results] = await db.query(
-        "SELECT id, email FROM accounts WHERE id = ?",
+        "SELECT id, email, account_status FROM accounts WHERE id = ?",
         [id]
       );
 
