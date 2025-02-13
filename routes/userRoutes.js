@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const fileUpload = require("express-fileupload");
+const jwt = require("jsonwebtoken");
 
 // Import middleware authenticateToken
 const {
@@ -47,17 +48,27 @@ router.post("/create-user", async (req, res) => {
     // if `is_driver === 1`, create driver inherited from user
     if (is_driver === 1) {
       await Driver.createDriver(accountId);
-      return res
-        .status(201)
-        .json({ message: "Driver created successfully", accountId });
     }
 
-    return res
-      .status(201)
-      .json({ message: "User created successfully", userId });
+    // Generate token JWT
+    const token = jwt.sign(
+      { id: accountId, email },
+      process.env.JWT_KEY,
+      { expiresIn: "7d" } // Expiration du token (ex: 7 jours)
+    );
+
+    // Return data for login
+    return res.status(201).json({
+      message:
+        is_driver === 1
+          ? "Driver created successfully"
+          : "User created successfully",
+      userId: accountId,
+      token,
+    });
   } catch (error) {
-    console.error("Error while creating user :" + error);
-    return res.status(500).json({ message: "Error server" + error.message });
+    console.error("Error creating user: " + error);
+    return res.status(500).json({ message: "Error server: " + error.message });
   }
 });
 
