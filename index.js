@@ -1,5 +1,8 @@
 const express = require("express");
 require("dotenv").config();
+const axios = require("axios");
+const cron = require("node-cron");
+const { updateDailyStatistics } = require("./services/statisticsService");
 
 const cors = require("cors");
 require("./config/mysql");
@@ -26,8 +29,18 @@ console.log(`Server running on port: ${PORT}`);
 
 // -------- SET UP ----------
 
-const axios = require("axios");
+// Exécuter la fonction tous les jours à minuit UTC
+cron.schedule("0 0 * * *", async () => {
+  console.log("⏳ Running updateDailyStatistics...");
+  try {
+    await updateDailyStatistics();
+    console.log("✅ Statistics updated !");
+  } catch (error) {
+    console.error("❌ Error updating statistics : " + error);
+  }
+});
 
+// Find Ip public Northflank
 axios
   .get("https://api64.ipify.org?format=json")
   .then((response) => {
@@ -37,16 +50,17 @@ axios
     console.error("❌ Impossible de récupérer l'IP publique", error);
   });
 
-app.all("*", (req, res) => {
-  res.status(404).json({ message: "This route does not exist" });
-});
-
 app.get("/", (req, res) => {
   res
     .status(200)
     .json({ message: "Server Node.js running! Welcome to Ecoride project!" });
 });
 
-app.listen(PORT, "0.0.0.0", () =>
-  console.log(`Server running on port: ${PORT}`)
-);
+app.all("*", (req, res) => {
+  res.status(404).json({ message: "This route does not exist" });
+});
+
+app.listen(PORT, "0.0.0.0", async () => {
+  console.log(`Server running on port: ${PORT}`);
+  // await connectToDatabase();
+});
