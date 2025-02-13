@@ -51,11 +51,9 @@ router.post("/create-user", async (req, res) => {
     }
 
     // Generate token JWT
-    const token = jwt.sign(
-      { id: accountId, email },
-      process.env.JWT_KEY,
-      { expiresIn: "7d" } // Expiration du token (ex: 7 jours)
-    );
+    const token = jwt.sign({ id: accountId, email }, process.env.JWT_KEY, {
+      expiresIn: "7d",
+    });
 
     // Return data for login
     return res.status(201).json({
@@ -87,6 +85,7 @@ router.get("/user/:id", async (req, res) => {
       return res.status(404).json({ error: "Account not found" });
     }
     user.email = account.email;
+    user.accountStatus = account.account_status;
 
     if (user.is_driver === 1) {
       user.driverInfos = await Driver.getDriverById(userId);
