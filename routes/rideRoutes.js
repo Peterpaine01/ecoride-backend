@@ -211,7 +211,7 @@ router.get("/search-rides", async (req, res) => {
         // Fetch driver (SQL)
         if (ride.driver && ride.driver.driverId) {
           const [driverResults] = await db.query(
-            `SELECT d.user_id, u.username, d.accept_smoking, d.accept_animals, 
+            `SELECT d.user_id, u.username, u.photo, d.accept_smoking, d.accept_animals, 
                     rs.average_rating, rs.total_reviews
              FROM drivers d
              JOIN users u ON d.user_id = u.account_id
