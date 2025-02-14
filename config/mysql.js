@@ -15,11 +15,14 @@ const db = mysql.createPool({
 // Test connection
 async function testConnection() {
   try {
-    const [rows] = await db.query("SELECT COUNT(*) AS total_users FROM users;");
+    const connection = await db.getConnection();
+    const [rows] = await connection.query(
+      "SELECT COUNT(*) AS total_users FROM users;"
+    );
     console.log("✅ MySQL connected!");
     console.log(rows[0]);
   } catch (error) {
-    console.error("❌ MySQL Connection Error: " + error);
+    console.error("❌ MySQL Connection Error: " + error.message);
   }
 }
 

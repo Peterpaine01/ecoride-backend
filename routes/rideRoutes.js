@@ -179,12 +179,6 @@ router.get("/search-rides", async (req, res) => {
     // Fetch rides (MongoDB)
     let rides = await RideModel.getRides(searchData);
 
-    if (rides.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No ride found with these criteria" });
-    }
-
     // Add car & driver details
     rides = await Promise.all(
       rides.map(async (ride) => {
@@ -255,7 +249,10 @@ router.get("/search-rides", async (req, res) => {
     rides = rides.filter((ride) => ride !== null);
 
     return res.status(200).json({
-      message: "Rides recovered successfully",
+      message:
+        rides.length > 0
+          ? "Rides recovered successfully"
+          : "No rides found with these criteria",
       count: rides.length,
       rides,
     });
