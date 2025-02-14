@@ -122,109 +122,41 @@ class RideModel {
       departureDate,
       maxCreditsPerPassenger,
       maxDuration,
-      isElectric,
-      minDriverRating,
-      acceptSmoking,
-      acceptAnimals,
     } = searchData;
+
     try {
-      // Build the filters according to the criteria passed as params
-      const filter = {};
+      const filter = { rideStatus: "forthcoming" };
 
-      // Filter according to ride status => only forthcoming rides
-      filter["rideStatus"] = "forthcoming";
-
-      // Departure city -> ignore case
       if (departureCity) {
         filter["departureAddress.city"] = {
-          $regex: new RegExp(departureCity, "i"), // Regex to ignore string case
+          $regex: new RegExp(departureCity, "i"),
         };
       }
-
-      // destination city -> ignore case
       if (destinationCity) {
         filter["destinationAddress.city"] = {
           $regex: new RegExp(destinationCity, "i"),
         };
       }
-
-      // Available seats
       if (availableSeats) {
-        filter.availableSeats = { $gte: availableSeats }; // greater than or egal to available seats
+        filter.availableSeats = { $gte: availableSeats };
       }
-
-      // Departure date
       if (departureDate) {
-        // Convert departureDate to ignore time => only comparing dates
         const startOfDay = new Date(departureDate);
-        startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00
+        startOfDay.setHours(0, 0, 0, 0);
         const endOfDay = new Date(departureDate);
-        endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59
-
-        filter.departureDate = { $gte: startOfDay, $lte: endOfDay }; // greater than or egal to starDay AND lesser than or egal to endDay
+        endOfDay.setHours(23, 59, 59, 999);
+        filter.departureDate = { $gte: startOfDay, $lte: endOfDay };
       }
-
-      // Filter according to credits
       if (maxCreditsPerPassenger) {
         filter.creditsPerPassenger = { $lte: maxCreditsPerPassenger };
       }
-
-      // Filter according to maxDuration
       if (maxDuration) {
-        filter.duration = { $lte: maxDuration }; // lesser than or egal to maxDuration
+        filter.duration = { $lte: maxDuration };
       }
 
-      // Get rides according to filters
-      let rides = await Ride.find(filter).sort({ departureDate: 1 }); // Sort by ascendant date (1)
+      let rides = await Ride.find(filter).sort({ departureDate: 1 });
 
-      // Get car details from cars table
-      for (let ride of rides) {
-        if (ride.car && ride.car.carId) {
-          const [carResults] = await db.query(
-            `SELECT * FROM cars WHERE id = ?`,
-            [ride.car.carId]
-          );
-          ride.car = carResults[0] || null;
-
-          // Filter accrording to energy's car => electric car = id n°3 in energies table
-          if (isElectric && ride.car && ride.car.energy_id !== 3) {
-            continue; // Continue if not electric
-          }
-        }
-
-        // Get driver's infos to check driver's rating
-        if (ride.driver && ride.driver.driverId) {
-          const [driverResults] = await db.query(
-            `SELECT d.user_id, u.username, d.accept_smoking, d.accept_animals, 
-                  rs.average_rating, rs.total_reviews
-           FROM drivers d
-           JOIN users u ON d.user_id = u.account_id
-           LEFT JOIN reviews_summaries rs ON d.user_id = rs.driver_id
-           WHERE d.user_id = ?`,
-            [ride.driver.driverId]
-          );
-
-          ride.driver = driverResults[0] || null;
-
-          // Check driver's rating
-          if (minDriverRating && ride.driver.average_rating < minDriverRating) {
-            continue; // Exclude if lower rating
-          }
-
-          // Filter according to driver's preferences (smoking & animals)
-          if (acceptSmoking && ride.driver && !ride.driver.accept_smoking) {
-            continue;
-          }
-          if (acceptAnimals && ride.driver && !ride.driver.accept_animals) {
-            continue;
-          }
-        }
-      }
-
-      // Count rides
-      const count = rides.length;
-
-      return { count, rides };
+      return rides;
     } catch (error) {
       throw new Error("Error fetching rides: " + error.message);
     }

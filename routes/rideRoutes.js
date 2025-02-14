@@ -174,31 +174,96 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
 router.get("/search-rides", async (req, res) => {
   try {
-    const { departureCity, destinationCity, availableSeats, departureDate } =
-      req.query;
+    const searchData = req.query;
 
-    console.log(req.query);
+    console.log("Recherche avec :", searchData);
 
-    const rides = await RideModel.getRides({
-      departureCity,
-      destinationCity,
-      availableSeats,
-      departureDate,
-    });
+    // Fetch rides (MongoDB)
+    let rides = await RideModel.getRides(searchData);
 
     if (rides.length === 0) {
-      return res.status(404).json({
-        message: "Aucun trajet trouvé avec ces critères.",
-      });
+      return res
+        .status(404)
+        .json({ message: "No ride found with these criteria" });
     }
 
-    res.status(200).json({
+    // Add car & driver details
+    rides = await Promise.all(
+      rides.map(async (ride) => {
+        let updatedRide = { ...ride.toObject() }; // Convert Mongoose Doc in JS Object
+
+        // Fetch car (SQL)
+        if (ride.car && ride.car.carId) {
+          const [carResults] = await db.query(
+            `SELECT * FROM cars WHERE id = ?`,
+            [ride.car.carId]
+          );
+          updatedRide.car = carResults.length > 0 ? carResults[0] : null;
+
+          // Filter electrical car
+          if (
+            searchData.isElectric &&
+            updatedRide.car &&
+            updatedRide.car.energy_id !== 3
+          ) {
+            return null;
+          }
+        }
+
+        // Fetch driver (SQL)
+        if (ride.driver && ride.driver.driverId) {
+          const [driverResults] = await db.query(
+            `SELECT d.user_id, u.username, d.accept_smoking, d.accept_animals, 
+                    rs.average_rating, rs.total_reviews
+             FROM drivers d
+             JOIN users u ON d.user_id = u.account_id
+             LEFT JOIN reviews_summaries rs ON d.user_id = rs.driver_id
+             WHERE d.user_id = ?`,
+            [ride.driver.driverId]
+          );
+
+          if (driverResults.length > 0) {
+            updatedRide.driver = driverResults[0];
+
+            // Filter according to driver's rating
+            if (
+              searchData.minDriverRating &&
+              updatedRide.driver.average_rating < searchData.minDriverRating
+            ) {
+              return null;
+            }
+
+            // Filter according to driver's preferences
+            if (
+              searchData.acceptSmoking &&
+              !updatedRide.driver.accept_smoking
+            ) {
+              return null;
+            }
+            if (
+              searchData.acceptAnimals &&
+              !updatedRide.driver.accept_animals
+            ) {
+              return null;
+            }
+          }
+        }
+
+        return updatedRide;
+      })
+    );
+
+    // Delete ride which don't meet filters
+    rides = rides.filter((ride) => ride !== null);
+
+    return res.status(200).json({
       message: "Rides recovered successfully",
+      count: rides.length,
       rides,
     });
   } catch (error) {
-    console.error("Error while recovering rides :" + error);
-    res.status(500).json({ message: "Server error" + error.message });
+    console.error("Error fetching rides : " + error);
+    res.status(500).json({ message: "Servor Error: " + error.message });
   }
 });
 
