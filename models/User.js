@@ -48,19 +48,31 @@ class User extends Account {
     consent_data_retention
   ) {
     try {
+      let photo =
+        "https://res.cloudinary.com/djxejhaxr/image/upload/ecoride/users/user-other_wwxni3.jpg"; // Default
+
+      if (gender === "male") {
+        photo =
+          "https://res.cloudinary.com/djxejhaxr/image/upload/ecoride/users/user-male_ielniw.jpg";
+      } else if (gender === "female") {
+        photo =
+          "https://res.cloudinary.com/djxejhaxr/image/upload/ecoride/users/user-female_q2uekw.jpg";
+      }
+
       const query =
-        "INSERT INTO users (account_id, username, gender, is_driver, consent_data_retention) VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO users (account_id, username, gender, is_driver, consent_data_retention, photo) VALUES (?, ?, ?, ?, ?, ?)";
       const [results] = await db.query(query, [
         account_id,
         username,
         gender,
         is_driver,
         consent_data_retention,
+        photo,
       ]);
 
       return account_id;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 

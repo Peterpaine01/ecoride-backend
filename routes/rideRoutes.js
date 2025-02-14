@@ -176,8 +176,6 @@ router.get("/search-rides", async (req, res) => {
   try {
     const searchData = req.query;
 
-    console.log("Recherche avec :", searchData);
-
     // Fetch rides (MongoDB)
     let rides = await RideModel.getRides(searchData);
 
