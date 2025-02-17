@@ -25,5 +25,8 @@
     "nodemailer-mailgun-transport": "^2.1.5",
     "nodemon": "^3.1.9",
     "uid2": "^1.0.0"
+  },
+  "engines": {
+    "node": "20.x"
   }
 }
