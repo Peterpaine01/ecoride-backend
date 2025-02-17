@@ -26,7 +26,7 @@ Ecoride est une plateforme de covoiturage conçue pour faciliter les trajets ent
 1. Cloner le dépôt :
 
    ```bash
-   git clone https://github.com/votre-repo/ecoride-backend.git
+   git clone https://github.com/Peterpaine01/ecoride-backend.git
    cd ecoride-backend
 
    ```
@@ -82,6 +82,7 @@ MYSQL_PORT=35920
 
 ### Structure du Projet
 
+```bash
 /ecoride-backend
 │── /src
 │ ├── /config # Configuration des bases de données et services
@@ -93,6 +94,7 @@ MYSQL_PORT=35920
 │ └── /services # Logique métier
 └── .env # Variables d’environnement
 ├── index.js # Point d’entrée de l’application
+```
 
 ### API Endpoints
 
