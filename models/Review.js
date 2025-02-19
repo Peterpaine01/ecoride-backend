@@ -72,16 +72,10 @@ class ReviewModel {
         "driver.driverId": driverId,
       }).populate("booking");
 
-      if (!reviews || reviews.length === 0) {
-        throw new Error("No reviews found for this driver");
-      }
-
       return reviews;
     } catch (error) {
-      console.error("Erreur lors de la récupération des rides: " + error);
-      throw new Error(
-        "Erreur lors de la récupération des rides: " + error.message
-      );
+      console.error("Error fetching review: " + error);
+      throw new Error("Error fetching review: " + error.message);
     }
   }
 
@@ -133,7 +127,7 @@ class ReviewModel {
       }
       return { averageRating: 0, totalReviews: 0 }; // Default values if no data
     } catch (error) {
-      throw new Error("Error while fetching summary: " + error.message);
+      throw new Error("Error fetching summary: " + error.message);
     }
   }
 }
