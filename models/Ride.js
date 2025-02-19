@@ -92,10 +92,6 @@ class RideModel {
       //   "bookings"
       // );
 
-      if (!rides || rides.length === 0) {
-        throw new Error("No ride found for this driver");
-      }
-
       // Get car details from cars table (SQL)
       for (let ride of rides) {
         if (ride.car && ride.car.carId) {

@@ -26,6 +26,7 @@ class ReviewModel {
   static async createReview(bookingId, reviewData) {
     try {
       const newReview = new Review({ ...reviewData, booking: bookingId });
+      console.log(newReview);
 
       const savedReview = await newReview.save();
 
