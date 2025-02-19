@@ -25,10 +25,10 @@ async function updateDailyStatistics() {
     );
 
     console.log(
-      `Statistiques mises à jour : ${totalRides} rides, ${dailyBenefits}€ de bénéfices`
+      `Statistics updated : ${totalRides} rides, ${dailyBenefits}crédits de bénéfices`
     );
   } catch (error) {
-    console.error("Erreur lors de la mise à jour des statistiques :", error);
+    console.error("Error updating statistiques :", error);
   }
 }
 

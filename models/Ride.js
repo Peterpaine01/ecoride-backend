@@ -21,12 +21,12 @@ const rideSchema = new mongoose.Schema({
   car: {
     carId: Number,
   },
-  // bookings: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: "Booking",
-  //   },
-  // ],
+  bookings: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+    },
+  ],
 });
 
 // Set mongoose model
