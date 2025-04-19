@@ -62,7 +62,7 @@ MYSQL_PORT=35920
 - En mode développement :
 
   ```bash
-  yarn dev
+  nodemon index.js
   ```
 
 - En mode production :
