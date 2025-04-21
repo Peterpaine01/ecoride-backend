@@ -119,29 +119,64 @@ class RideModel {
           $regex: new RegExp(departureCity, "i"),
         }
       }
+
       if (destinationCity) {
         filter["destinationAddress.city"] = {
           $regex: new RegExp(destinationCity, "i"),
         }
       }
+
       if (availableSeats) {
         filter.availableSeats = { $gte: availableSeats }
       }
+
+      const now = new Date()
+
       if (departureDate) {
         const startOfDay = new Date(departureDate)
         startOfDay.setHours(0, 0, 0, 0)
-        const endOfDay = new Date(departureDate)
-        endOfDay.setHours(23, 59, 59, 999)
-        filter.departureDate = { $gte: startOfDay, $lte: endOfDay }
+
+        if (startOfDay.toDateString() === now.toDateString()) {
+          const currentTime = now.toTimeString().slice(0, 5)
+          filter.$or = [
+            { departureDate: { $gt: startOfDay } },
+            {
+              departureDate: startOfDay,
+              departureTime: { $gt: currentTime },
+            },
+          ]
+        } else {
+          const endOfDay = new Date(departureDate)
+          endOfDay.setHours(23, 59, 59, 999)
+          filter.departureDate = { $gte: startOfDay, $lte: endOfDay }
+        }
+      } else {
+        // Si aucune date précisée : on veut tous les trajets à partir de maintenant
+        const startOfToday = new Date()
+        startOfToday.setHours(0, 0, 0, 0)
+        const currentTime = now.toTimeString().slice(0, 5)
+
+        filter.$or = [
+          { departureDate: { $gt: startOfToday } },
+          {
+            departureDate: startOfToday,
+            departureTime: { $gt: currentTime },
+          },
+        ]
       }
+
       if (maxCreditsPerPassenger) {
         filter.creditsPerPassenger = { $lte: maxCreditsPerPassenger }
       }
+
       if (maxDuration) {
         filter.duration = { $lte: maxDuration }
       }
 
-      let rides = await Ride.find(filter).sort({ departureDate: 1 })
+      const rides = await Ride.find(filter).sort({
+        departureDate: 1,
+        departureTime: 1,
+      })
 
       return rides
     } catch (error) {
