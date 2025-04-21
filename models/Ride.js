@@ -149,41 +149,64 @@ class RideModel {
         filter.availableSeats = { $gte: Number(availableSeats) }
       }
 
-      const now = new Date()
-      const currentTime = now.toTimeString().slice(0, 5)
-
       if (departureDate) {
         const startOfDay = new Date(departureDate)
         startOfDay.setHours(0, 0, 0, 0)
 
-        if (isFuzzy) {
-          filter.$or = [
-            { departureDate: { $gt: startOfDay } },
-            {
-              departureDate: startOfDay,
-              departureTime: { $gt: currentTime },
-            },
-          ]
-        } else {
-          const endOfDay = new Date(departureDate)
-          endOfDay.setHours(23, 59, 59, 999)
+        const endOfDay = new Date(departureDate)
+        endOfDay.setHours(23, 59, 59, 999)
 
-          filter.$or = [
-            { departureDate: { $gt: startOfDay, $lte: endOfDay } },
-            {
+        const now = new Date()
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+
+        const isSameDay =
+          startOfDay.getFullYear() === today.getFullYear() &&
+          startOfDay.getMonth() === today.getMonth() &&
+          startOfDay.getDate() === today.getDate()
+
+        const currentTime = now.toTimeString().slice(0, 5) // format "HH:MM"
+
+        if (isFuzzy) {
+          const endOfFuzzyWindow = new Date(startOfDay)
+          endOfFuzzyWindow.setDate(endOfFuzzyWindow.getDate() + 3)
+
+          filter.departureDate = {
+            $gte: startOfDay,
+            $lte: endOfFuzzyWindow,
+          }
+
+          // Si la date fuzzy est aujourd'hui, on ajoute une contrainte sur l'heure
+          if (isSameDay) {
+            filter.departureTime = { $gt: currentTime }
+          }
+        } else {
+          filter.$or = []
+
+          if (isSameDay) {
+            filter.$or.push({
               departureDate: startOfDay,
               departureTime: { $gt: currentTime },
-            },
-          ]
+            })
+          } else {
+            filter.$or.push({
+              departureDate: {
+                $gte: startOfDay,
+                $lte: endOfDay,
+              },
+            })
+          }
         }
       } else {
-        const startOfToday = new Date()
-        startOfToday.setHours(0, 0, 0, 0)
+        const now = new Date()
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const currentTime = now.toTimeString().slice(0, 5)
 
         filter.$or = [
-          { departureDate: { $gt: startOfToday } },
+          { departureDate: { $gt: today } },
           {
-            departureDate: startOfToday,
+            departureDate: today,
             departureTime: { $gt: currentTime },
           },
         ]
