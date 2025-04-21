@@ -4,7 +4,7 @@ const db = require("../config/mysql")
 // Define schema
 const rideSchema = new mongoose.Schema({
   departureDate: Date,
-  departureAddress: Object, // { street: String, city: String, zip: String }
+  departureAddress: Object, // { street: String, city: String, normalizedCity: String, zip: String }
   destinationAddress: Object,
   duration: Number,
   availableSeats: Number,
@@ -49,8 +49,14 @@ class RideModel {
     try {
       const newRide = new Ride({
         departureDate,
-        departureAddress,
-        destinationAddress,
+        departureAddress: {
+          ...departureAddress,
+          normalizedCity: normalizeCity(departureAddress.city),
+        },
+        destinationAddress: {
+          ...destinationAddress,
+          normalizedCity: normalizeCity(destinationAddress.city),
+        },
         duration,
         availableSeats,
         creditsPerPassenger,
@@ -60,7 +66,6 @@ class RideModel {
           carId: vehicleId,
         },
       })
-      console.log("🚀 Nouveau ride prêt à être sauvé :", newRide)
       return await newRide.save()
     } catch (error) {
       throw new Error("Error creating ride: " + error.message)
@@ -110,6 +115,7 @@ class RideModel {
       maxCreditsPerPassenger,
       maxDuration,
     } = searchData
+
     try {
       const filter = { rideStatus: "forthcoming" }
 
@@ -117,14 +123,14 @@ class RideModel {
         str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 
       if (departureCity) {
-        filter["departureAddress.city"] = {
+        filter["departureAddress.normalizedCity"] = {
           $exists: true,
           $regex: new RegExp(normalizeCity(departureCity), "i"),
         }
       }
 
       if (destinationCity) {
-        filter["destinationAddress.city"] = {
+        filter["destinationAddress.normalizedCity"] = {
           $exists: true,
           $regex: new RegExp(normalizeCity(destinationCity), "i"),
         }
@@ -176,6 +182,7 @@ class RideModel {
       if (maxDuration) {
         filter.duration = { $lte: Number(maxDuration) }
       }
+      console.log("filter >", filter)
       const rides = await Ride.find(filter).sort({
         departureDate: 1,
         departureTime: 1,
@@ -190,6 +197,18 @@ class RideModel {
   // Update ride
   static async updateRide(rideId, updateData) {
     try {
+      if (updateData.departureAddress?.city) {
+        updateData.departureAddress.normalizedCity = normalizeCity(
+          updateData.departureAddress.city
+        )
+      }
+
+      if (updateData.destinationAddress?.city) {
+        updateData.destinationAddress.normalizedCity = normalizeCity(
+          updateData.destinationAddress.city
+        )
+      }
+
       const updatedRide = await Ride.findByIdAndUpdate(rideId, updateData, {
         new: true,
       })
