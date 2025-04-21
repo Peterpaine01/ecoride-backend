@@ -83,7 +83,7 @@ class Driver extends User {
     try {
       // Get driver-specific fields
       const [driverResults] = await db.query(
-        "SELECT accept_smoking, accept_animals FROM drivers WHERE user_id = ?",
+        "SELECT user_id, accept_smoking, accept_animals FROM drivers WHERE user_id = ?",
         [user_id]
       )
       if (driverResults.length === 0) return null
