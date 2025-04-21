@@ -97,6 +97,8 @@ class Driver extends User {
       )
       if (userResults.length > 0) {
         driver.gender = userResults[0].gender
+        driver.photo = userResults[0].photo
+        driver.username = userResults[0].username
       } else {
         driver.gender = null
       }
