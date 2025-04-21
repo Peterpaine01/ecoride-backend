@@ -92,7 +92,7 @@ class Driver extends User {
 
       // Get user fields
       const [userResults] = await db.query(
-        "SELECT gender FROM users WHERE account_id = ?",
+        "SELECT gender, photo, username FROM users WHERE account_id = ?",
         [user_id]
       )
       if (userResults.length > 0) {
