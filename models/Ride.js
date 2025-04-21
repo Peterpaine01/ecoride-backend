@@ -203,13 +203,26 @@ class RideModel {
         today.setHours(0, 0, 0, 0)
         const currentTime = now.toTimeString().slice(0, 5)
 
-        filter.$or = [
-          { departureDate: { $gt: today } },
-          {
-            departureDate: today,
-            departureTime: { $gt: currentTime },
-          },
-        ]
+        const dateDiff = now.getDate() !== today.getDate()
+        console.log(now.getDate(), today.getDate())
+
+        if (dateDiff) {
+          filter.$or = [
+            { departureDate: { $gte: today.setDate(today.getDate() + 1) } },
+            {
+              departureDate: today,
+              departureTime: { $gte: currentTime },
+            },
+          ]
+        } else {
+          filter.$or = [
+            { departureDate: { $gte: today } },
+            {
+              departureDate: today,
+              departureTime: { $gte: currentTime },
+            },
+          ]
+        }
       }
 
       if (!isNaN(Number(maxCreditsPerPassenger))) {
