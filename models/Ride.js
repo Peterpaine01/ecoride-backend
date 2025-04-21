@@ -110,24 +110,28 @@ class RideModel {
       maxCreditsPerPassenger,
       maxDuration,
     } = searchData
-
     try {
       const filter = { rideStatus: "forthcoming" }
 
+      const normalizeCity = (str) =>
+        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
       if (departureCity) {
         filter["departureAddress.city"] = {
-          $regex: new RegExp(departureCity, "i"),
+          $exists: true,
+          $regex: new RegExp(normalizeCity(departureCity), "i"),
         }
       }
 
       if (destinationCity) {
         filter["destinationAddress.city"] = {
-          $regex: new RegExp(destinationCity, "i"),
+          $exists: true,
+          $regex: new RegExp(normalizeCity(destinationCity), "i"),
         }
       }
 
       if (availableSeats) {
-        filter.availableSeats = { $gte: availableSeats }
+        filter.availableSeats = { $gte: Number(availableSeats) }
       }
 
       const now = new Date()
@@ -151,7 +155,7 @@ class RideModel {
           filter.departureDate = { $gte: startOfDay, $lte: endOfDay }
         }
       } else {
-        // Si aucune date précisée : on veut tous les trajets à partir de maintenant
+        // Si aucune date précisée : tous les trajets à partir de maintenant
         const startOfToday = new Date()
         startOfToday.setHours(0, 0, 0, 0)
         const currentTime = now.toTimeString().slice(0, 5)
@@ -166,13 +170,12 @@ class RideModel {
       }
 
       if (maxCreditsPerPassenger) {
-        filter.creditsPerPassenger = { $lte: maxCreditsPerPassenger }
+        filter.creditsPerPassenger = { $lte: Number(maxCreditsPerPassenger) }
       }
 
       if (maxDuration) {
-        filter.duration = { $lte: maxDuration }
+        filter.duration = { $lte: Number(maxDuration) }
       }
-
       const rides = await Ride.find(filter).sort({
         departureDate: 1,
         departureTime: 1,
