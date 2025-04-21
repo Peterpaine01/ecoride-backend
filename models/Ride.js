@@ -1,6 +1,11 @@
 const mongoose = require("../config/mongodb")
 const db = require("../config/mysql")
 
+const Driver = require("./Driver")
+const User = require("./User")
+
+const normalizeCity = require("../utils/normalizeCity")
+
 // Define schema
 const rideSchema = new mongoose.Schema({
   departureDate: Date,
@@ -107,20 +112,24 @@ class RideModel {
   }
 
   static async getRides(searchData) {
-    const {
+    let {
       departureCity,
       destinationCity,
       availableSeats,
       departureDate,
       maxCreditsPerPassenger,
       maxDuration,
+      fuzzy,
+      gender,
+      minRating,
+      acceptSmoking,
+      acceptAnimals,
     } = searchData
+
+    const isFuzzy = fuzzy === "true"
 
     try {
       const filter = { rideStatus: "forthcoming" }
-
-      const normalizeCity = (str) =>
-        str.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
 
       if (departureCity) {
         filter["departureAddress.normalizedCity"] = {
@@ -136,18 +145,18 @@ class RideModel {
         }
       }
 
-      if (availableSeats) {
+      if (!isNaN(Number(availableSeats))) {
         filter.availableSeats = { $gte: Number(availableSeats) }
       }
 
       const now = new Date()
+      const currentTime = now.toTimeString().slice(0, 5)
 
       if (departureDate) {
         const startOfDay = new Date(departureDate)
         startOfDay.setHours(0, 0, 0, 0)
 
-        if (startOfDay.toDateString() === now.toDateString()) {
-          const currentTime = now.toTimeString().slice(0, 5)
+        if (isFuzzy) {
           filter.$or = [
             { departureDate: { $gt: startOfDay } },
             {
@@ -158,13 +167,18 @@ class RideModel {
         } else {
           const endOfDay = new Date(departureDate)
           endOfDay.setHours(23, 59, 59, 999)
-          filter.departureDate = { $gte: startOfDay, $lte: endOfDay }
+
+          filter.$or = [
+            { departureDate: { $gt: startOfDay, $lte: endOfDay } },
+            {
+              departureDate: startOfDay,
+              departureTime: { $gt: currentTime },
+            },
+          ]
         }
       } else {
-        // Si aucune date précisée : tous les trajets à partir de maintenant
         const startOfToday = new Date()
         startOfToday.setHours(0, 0, 0, 0)
-        const currentTime = now.toTimeString().slice(0, 5)
 
         filter.$or = [
           { departureDate: { $gt: startOfToday } },
@@ -175,20 +189,40 @@ class RideModel {
         ]
       }
 
-      if (maxCreditsPerPassenger) {
+      if (!isNaN(Number(maxCreditsPerPassenger))) {
         filter.creditsPerPassenger = { $lte: Number(maxCreditsPerPassenger) }
       }
 
-      if (maxDuration) {
+      if (!isNaN(Number(maxDuration))) {
         filter.duration = { $lte: Number(maxDuration) }
       }
-      console.log("filter >", filter)
+      // console.log("filter >", filter)
       const rides = await Ride.find(filter).sort({
         departureDate: 1,
         departureTime: 1,
       })
 
-      return rides
+      if (!gender && !acceptSmoking && !acceptAnimals && !minRating) {
+        return rides
+      }
+
+      // Driver criteria
+      const filteredRides = []
+      acceptSmoking = acceptSmoking === "true" ? 1 : 0
+      acceptAnimals = acceptAnimals === "true" ? 1 : 0
+
+      for (const ride of rides) {
+        const driver = await Driver.getDriverById(ride.driver.driverId)
+        if (!driver) continue
+
+        if (gender && driver.gender !== gender) continue
+        if (acceptSmoking && driver.accept_smoking !== acceptSmoking) continue
+        if (acceptAnimals && driver.accept_animals !== acceptAnimals) continue
+        if (minRating && driver.average_rating < Number(minRating)) continue
+
+        filteredRides.push(ride)
+      }
+      return filteredRides
     } catch (error) {
       throw new Error("Error fetching rides: " + error.message)
     }
