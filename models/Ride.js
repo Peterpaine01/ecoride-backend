@@ -149,23 +149,34 @@ class RideModel {
         filter.availableSeats = { $gte: Number(availableSeats) }
       }
 
+      const now = new Date()
+      // console.log("now", now)
+
+      const offsetMs = now.getTimezoneOffset() * 60 * 1000 // en ms
+      const localMidnight = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      )
+      const todayLocal = new Date(localMidnight.getTime() - offsetMs) // convertie en UTC
+      todayLocal.setHours(0, 0, 0, 0)
+
+      // console.log("todayLocal", todayLocal)
+
       if (departureDate) {
         const startOfDay = new Date(departureDate)
-        startOfDay.setHours(0, 0, 0, 0)
+        startOfDay.toLocaleString()
+        // console.log("startOfDay", startOfDay)
 
         const endOfDay = new Date(departureDate)
-        endOfDay.setHours(23, 59, 59, 999)
-
-        const now = new Date()
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
+        endOfDay.setHours(23, 59, 59, 999).toLocaleString()
+        // console.log("endOfDay", endOfDay)
 
         const isSameDay =
-          startOfDay.getFullYear() === today.getFullYear() &&
-          startOfDay.getMonth() === today.getMonth() &&
-          startOfDay.getDate() === today.getDate()
-
-        const currentTime = now.toTimeString().slice(0, 5) // format "HH:MM"
+          startOfDay.getFullYear() === todayLocal.getFullYear() &&
+          startOfDay.getMonth() === todayLocal.getMonth() &&
+          startOfDay.getDate() === todayLocal.getDate()
+        // console.log("isSameDay", isSameDay)
 
         if (isFuzzy) {
           const endOfFuzzyWindow = new Date(startOfDay)
@@ -176,52 +187,25 @@ class RideModel {
             $lte: endOfFuzzyWindow,
           }
 
-          // Si la date fuzzy est aujourd'hui, on ajoute une contrainte sur l'heure
           if (isSameDay) {
-            filter.departureTime = { $gt: currentTime }
+            filter.departureDate = { $gte: now, $lte: endOfFuzzyWindow }
           }
         } else {
-          filter.$or = []
-
           if (isSameDay) {
-            filter.$or.push({
-              departureDate: startOfDay,
-              departureTime: { $gt: currentTime },
-            })
+            filter.departureDate = {
+              $gte: now,
+              $lte: endOfDay,
+            }
           } else {
-            filter.$or.push({
-              departureDate: {
-                $gte: startOfDay,
-                $lte: endOfDay,
-              },
-            })
+            filter.departureDate = {
+              $gte: startOfDay,
+              $lte: endOfDay,
+            }
           }
         }
       } else {
-        const now = new Date()
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const currentTime = now.toTimeString().slice(0, 5)
-
-        const dateDiff = now.getDate() !== today.getDate()
-        console.log(now.getDate(), today.getDate())
-
-        if (dateDiff) {
-          filter.$or = [
-            { departureDate: { $gte: today.setDate(today.getDate() + 1) } },
-            {
-              departureDate: today,
-              departureTime: { $gte: currentTime },
-            },
-          ]
-        } else {
-          filter.$or = [
-            { departureDate: { $gte: today } },
-            {
-              departureDate: today,
-              departureTime: { $gte: currentTime },
-            },
-          ]
+        filter.departureDate = {
+          $gte: now,
         }
       }
 
