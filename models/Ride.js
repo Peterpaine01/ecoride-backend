@@ -235,7 +235,11 @@ class RideModel {
         const driver = await Driver.getDriverById(ride.driver.driverId)
         if (!driver) continue
 
-        if (gender && driver.gender !== gender) continue
+        if (gender && gender !== "all") {
+          const acceptedGenders =
+            gender === "male" ? ["male", "other"] : ["female", "other"]
+          if (!acceptedGenders.includes(driver.gender)) continue
+        }
         if (acceptSmoking && driver.accept_smoking !== acceptSmoking) continue
         if (acceptAnimals && driver.accept_animals !== acceptAnimals) continue
         if (minRating && driver.average_rating < Number(minRating)) continue
