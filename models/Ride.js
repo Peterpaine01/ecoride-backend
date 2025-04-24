@@ -2,7 +2,6 @@ const mongoose = require("../config/mongodb")
 const db = require("../config/mysql")
 
 const Driver = require("./Driver")
-const User = require("./User")
 
 const normalizeCity = require("../utils/normalizeCity")
 
