@@ -1,12 +1,13 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const nodemailer = require("nodemailer");
-require("dotenv").config();
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
+const nodemailer = require("nodemailer")
+require("dotenv").config()
 
-const db = require("../config/mysql");
+const db = require("../config/mysql")
 
-const hashPassword = require("../utils/hashPassword");
+const hashPassword = require("../utils/hashPassword")
+const sendNotificationEmail = require("../utils/sendNotificationEmail")
 
 class Account {
   constructor(
@@ -19,38 +20,38 @@ class Account {
     deleted_at,
     verification_token
   ) {
-    this.id = id;
-    this.email = email;
-    this.password = password;
-    this.account_type = account_type;
-    this.account_status = account_status;
-    this.created_at = created_at;
-    this.deleted_at = deleted_at;
-    this.verification_token = verification_token;
+    this.id = id
+    this.email = email
+    this.password = password
+    this.account_type = account_type
+    this.account_status = account_status
+    this.created_at = created_at
+    this.deleted_at = deleted_at
+    this.verification_token = verification_token
   }
 
   static async createAccount(email, password) {
     try {
-      const hashedPassword = await hashPassword(password); // Hash before insertion
+      const hashedPassword = await hashPassword(password) // Hash before insertion
 
-      const verificationToken = crypto.randomBytes(32).toString("hex"); // Generate a random token
+      const verificationToken = crypto.randomBytes(32).toString("hex") // Generate a random token
 
       const query =
-        "INSERT INTO accounts (email, password, account_type, verification_token) VALUES (?, ?, 'user', ?)";
+        "INSERT INTO accounts (email, password, account_type, verification_token) VALUES (?, ?, 'user', ?)"
       const [results] = await db.query(query, [
         email,
         hashedPassword,
         verificationToken,
-      ]);
-      console.log("account results", results);
+      ])
+      console.log("account results", results)
 
       // Send email with verification link
-      await Account.sendVerificationEmail(email, verificationToken);
+      await Account.sendVerificationEmail(email, verificationToken)
 
-      return results.insertId;
+      return results.insertId
     } catch (error) {
-      console.error("Error while creating account:" + error);
-      throw error;
+      console.error("Error while creating account:" + error)
+      throw error
     }
   }
 
@@ -63,10 +64,10 @@ class Account {
         user: "burley.bode10@ethereal.email", // user Ethereal
         pass: "uKPZ5DjVXVgUXAAeEb", // pass Ethereal
       },
-    });
+    })
 
-    const verificationUrl = `${process.env.BACK_URL}:${process.env.PORT}/user/verify/${token}`;
-    const redirectUrl = `${process.env.FRONT_URL}/valider-mon-compte/${token}`;
+    const verificationUrl = `${process.env.BACK_URL}:${process.env.PORT}/user/verify/${token}`
+    const redirectUrl = `${process.env.FRONT_URL}/valider-mon-compte/${token}`
 
     const mailOptions = {
       from: '"Ecoride" <hello@ecoride.com>',
@@ -78,46 +79,46 @@ class Account {
         <p>Avant de commencer à les utiliser, cliquez sur le lien pour activer votre compte :</p>
         <a href="${redirectUrl}">Activer mon compte</a>
       `,
-    };
+    }
 
     try {
-      await transporter.sendMail(mailOptions);
-      console.log("Email send to " + email);
+      await transporter.sendMail(mailOptions)
+      console.log("Email send to " + email)
     } catch (error) {
-      console.error("Error while sending email:" + error);
+      console.error("Error while sending email:" + error)
     }
   }
 
   static async login(email, password) {
     try {
-      console.log(email);
+      console.log(email)
 
-      const query = "SELECT * FROM accounts WHERE email = ?";
-      const [results] = await db.query(query, [email]);
+      const query = "SELECT * FROM accounts WHERE email = ?"
+      const [results] = await db.query(query, [email])
 
       if (results.length === 0) {
-        throw new Error("Account not found");
+        throw new Error("Account not found")
       }
 
-      const account = results[0];
+      const account = results[0]
 
       // Check password
-      const isMatch = await bcrypt.compare(password, account.password);
+      const isMatch = await bcrypt.compare(password, account.password)
       if (!isMatch) {
-        throw new Error("Incorrect password");
+        throw new Error("Incorrect password")
       }
 
       // Create token JWT
       const token = jwt.sign(
         { id: account.id, email: account.email },
         process.env.JWT_KEY
-      );
+      )
 
       // Return token and user id
-      return { token, userId: account.id };
+      return { token, userId: account.id }
     } catch (err) {
-      console.error("Error while trying to connect:", err);
-      throw err;
+      console.error("Error while trying to connect:", err)
+      throw err
     }
   }
 
@@ -126,16 +127,16 @@ class Account {
       const [results] = await db.query(
         "SELECT id, email, account_status FROM accounts WHERE id = ?",
         [id]
-      );
+      )
 
-      if (results.length === 0) return null;
+      if (results.length === 0) return null
 
-      const account = results[0];
-      return account;
+      const account = results[0]
+      return account
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 }
 
-module.exports = Account;
+module.exports = Account

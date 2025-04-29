@@ -1,0 +1,82 @@
+[
+  {
+    "email": "erikajohnston@hotmail.com",
+    "password": "4545Studi!",
+    "username": "lbuchanan",
+    "gender": "other",
+    "is_driver": 1,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "jmay@yahoo.com",
+    "password": "4545Studi!",
+    "username": "barbarajohnson",
+    "gender": "female",
+    "is_driver": 1,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "hughesbrandon@yahoo.com",
+    "password": "4545Studi!",
+    "username": "ldyer",
+    "gender": "female",
+    "is_driver": 1,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "thomasmoore@stone.info",
+    "password": "4545Studi!",
+    "username": "vickihill",
+    "gender": "female",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "micheal01@yahoo.com",
+    "password": "4545Studi!",
+    "username": "danny73",
+    "gender": "male",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "foconnor@brown-hooper.com",
+    "password": "4545Studi!",
+    "username": "hestercasey",
+    "gender": "male",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "mialane@yahoo.com",
+    "password": "4545Studi!",
+    "username": "mendozajenna",
+    "gender": "other",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "hintonsandra@hotmail.com",
+    "password": "4545Studi!",
+    "username": "dylan93",
+    "gender": "female",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "bruceoscar@young.net",
+    "password": "4545Studi!",
+    "username": "davidjacobs",
+    "gender": "female",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  },
+  {
+    "email": "rwilkins@barton.com",
+    "password": "4545Studi!",
+    "username": "kanderson",
+    "gender": "female",
+    "is_driver": 0,
+    "consent_data_retention": 1
+  }
+]

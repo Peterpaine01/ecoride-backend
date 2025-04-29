@@ -88,9 +88,6 @@ class RideModel {
   static async getRidesByDriver(driverId) {
     try {
       const rides = await Ride.find({ "driver.driverId": driverId })
-      // const rides = await Ride.find({ "driver.driverId": driverId }).populate(
-      //   "bookings"
-      // );
 
       // Get car details from cars table (SQL)
       for (let ride of rides) {
@@ -149,7 +146,6 @@ class RideModel {
       }
 
       const now = new Date()
-      // console.log("now", now)
 
       const offsetMs = now.getTimezoneOffset() * 60 * 1000 // en ms
       const localMidnight = new Date(
@@ -157,25 +153,20 @@ class RideModel {
         now.getMonth(),
         now.getDate()
       )
-      const todayLocal = new Date(localMidnight.getTime() - offsetMs) // convertie en UTC
+      const todayLocal = new Date(localMidnight.getTime() - offsetMs)
       todayLocal.setHours(0, 0, 0, 0)
-
-      // console.log("todayLocal", todayLocal)
 
       if (departureDate) {
         const startOfDay = new Date(departureDate)
         startOfDay.toLocaleString()
-        // console.log("startOfDay", startOfDay)
 
         const endOfDay = new Date(departureDate)
         endOfDay.setHours(23, 59, 59, 999).toLocaleString()
-        // console.log("endOfDay", endOfDay)
 
         const isSameDay =
           startOfDay.getFullYear() === todayLocal.getFullYear() &&
           startOfDay.getMonth() === todayLocal.getMonth() &&
           startOfDay.getDate() === todayLocal.getDate()
-        // console.log("isSameDay", isSameDay)
 
         if (isFuzzy) {
           const endOfFuzzyWindow = new Date(startOfDay)

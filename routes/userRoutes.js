@@ -1,25 +1,25 @@
-const express = require("express");
+const express = require("express")
 // can't use 'app' anymore (already set in index.js ), so I use express.Router to set my routes
-const router = express.Router();
+const router = express.Router()
 
-const fileUpload = require("express-fileupload");
-const jwt = require("jsonwebtoken");
+const fileUpload = require("express-fileupload")
+const jwt = require("jsonwebtoken")
 
 // Import middleware authenticateToken
 const {
   authenticateToken,
   isStaffMember,
   isAdmin,
-} = require("../middlewares/authenticateToken");
+} = require("../middlewares/authenticateToken")
 
-const cloudinary = require("cloudinary").v2;
-const convertToBase64 = require("../utils/convertToBase64");
+const cloudinary = require("cloudinary").v2
+const convertToBase64 = require("../utils/convertToBase64")
 
 // Import models
-const Account = require("../models/Account");
-const User = require("../models/User");
-const Driver = require("../models/Driver");
-const Car = require("../models/Car");
+const Account = require("../models/Account")
+const User = require("../models/User")
+const Driver = require("../models/Driver")
+const Car = require("../models/Car")
 
 // CREATE - add a user or a driver
 router.post("/create-user", async (req, res) => {
@@ -30,11 +30,11 @@ router.post("/create-user", async (req, res) => {
     gender,
     is_driver,
     consent_data_retention,
-  } = req.body;
+  } = req.body
 
   try {
     // Create account
-    const accountId = await Account.createAccount(email, password);
+    const accountId = await Account.createAccount(email, password)
 
     // Create user inherited from account
     const userId = await User.createUser(
@@ -43,17 +43,17 @@ router.post("/create-user", async (req, res) => {
       gender,
       is_driver,
       consent_data_retention
-    );
+    )
 
     // if `is_driver === 1`, create driver inherited from user
     if (is_driver === 1) {
-      await Driver.createDriver(accountId);
+      await Driver.createDriver(accountId)
     }
 
     // Generate token JWT
     const token = jwt.sign({ id: accountId, email }, process.env.JWT_KEY, {
       expiresIn: "7d",
-    });
+    })
 
     // Return data for login
     return res.status(201).json({
@@ -63,57 +63,57 @@ router.post("/create-user", async (req, res) => {
           : "User created successfully",
       userId: accountId,
       token,
-    });
+    })
   } catch (error) {
-    console.error("Error creating user: " + error);
-    return res.status(500).json({ message: "Error server: " + error.message });
+    console.error("Error creating user: " + error)
+    return res.status(500).json({ message: "Error server: " + error.message })
   }
-});
+})
 
 // READ - get one user by id
 router.get("/user/:id", async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.params.id
 
   try {
-    let user = await User.getUserById(userId);
+    let user = await User.getUserById(userId)
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "User not found" })
     }
 
-    const account = await Account.getAccountById(userId);
+    const account = await Account.getAccountById(userId)
     if (!account) {
-      return res.status(404).json({ error: "Account not found" });
+      return res.status(404).json({ error: "Account not found" })
     }
-    user.email = account.email;
-    user.accountStatus = account.account_status;
+    user.email = account.email
+    user.accountStatus = account.account_status
 
     if (user.is_driver === 1) {
-      user.driverInfos = await Driver.getDriverById(userId);
+      user.driverInfos = await Driver.getDriverById(userId)
 
-      user.driverInfos.cars = await Car.getCarsByDriver(userId);
+      user.driverInfos.cars = await Car.getCarsByDriver(userId)
     }
 
-    user.is_driver = Boolean(user.is_driver);
+    user.is_driver = Boolean(user.is_driver)
 
-    console.log(user);
+    console.log(user)
 
-    return res.status(200).json(user);
+    return res.status(200).json(user)
   } catch (error) {
-    console.error("Error while recovering user:" + error);
-    return res.status(500).json({ message: "Error server" + error.message });
+    console.error("Error while recovering user:" + error)
+    return res.status(500).json({ message: "Error server" + error.message })
   }
-});
+})
 
 // READ - Get all users
 router.get("/users", async (req, res) => {
   try {
-    const users = await User.getAllUsers();
-    return res.status(200).json(users);
+    const users = await User.getAllUsers()
+    return res.status(200).json(users)
   } catch (error) {
-    console.error("Error while recovering users :" + error);
-    return res.status(500).json({ message: "Error server" + error.message });
+    console.error("Error while recovering users :" + error)
+    return res.status(500).json({ message: "Error server" + error.message })
   }
-});
+})
 
 // UPDATE - update a user
 router.put(
@@ -121,7 +121,7 @@ router.put(
   fileUpload(),
   authenticateToken,
   async (req, res) => {
-    const userId = req.params.id;
+    const userId = req.params.id
     const {
       username,
       gender,
@@ -130,22 +130,22 @@ router.put(
       password,
       accept_smoking,
       accept_animals,
-    } = req.body;
-    const photo = req.files?.photo;
-    let photoOnCloudinary = "";
+    } = req.body
+    const photo = req.files?.photo
+    let photoOnCloudinary = ""
     try {
       if (photo) {
         // transforming image in string readable by cloudinary
-        const transformedPicture = convertToBase64(photo);
+        const transformedPicture = convertToBase64(photo)
         // sending request to cloudianry for uploading my image
         const result = await cloudinary.uploader.upload(transformedPicture, {
           folder: `ecoride/users/user-${userId}`,
-        });
+        })
 
-        photoOnCloudinary = result;
+        photoOnCloudinary = result
       }
-      console.log(photoOnCloudinary.secure_url);
-      const photoToUpdate = photoOnCloudinary.secure_url;
+      console.log(photoOnCloudinary.secure_url)
+      const photoToUpdate = photoOnCloudinary.secure_url
 
       await User.updateUser(userId, {
         username,
@@ -156,14 +156,49 @@ router.put(
         accept_smoking,
         accept_animals,
         photoToUpdate,
-      });
+      })
 
-      return res.status(200).json({ message: "User updated successfully" });
+      return res.status(200).json({ message: "User updated successfully" })
     } catch (error) {
-      console.error("Error while updating user :" + error);
-      return res.status(500).json({ message: "Error server" + error.message });
+      console.error("Error while updating user :" + error)
+      return res.status(500).json({ message: "Error server" + error.message })
     }
   }
-);
+)
 
-module.exports = router;
+// DELETE - soft delete a user
+router.patch("/soft-delete-user/:id", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.params.id
+
+    if (req.user.id !== userId) {
+      return res
+        .status(403)
+        .json({ error: "Acces denied. You can only delete your own accont." })
+    }
+
+    await User.softDeleteUserById(userId)
+    res.status(200).json({ message: "User anonymised successfully." })
+  } catch (error) {
+    console.error("Error soft delete:", error)
+    res.status(500).json({ error: "Error anonymising user." })
+  }
+})
+
+router.delete(
+  "/hard-delete-user//:id",
+  authenticateToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const userId = req.params.id
+      await User.hardDeleteUserById(userId)
+      res.status(200).json({ message: "User deleted permanently." })
+    } catch (error) {
+      console.error("Error hard delete:", error)
+      res.status(500).json({ error: "Error deleting user." })
+    }
+  }
+)
+
+module.exports = router

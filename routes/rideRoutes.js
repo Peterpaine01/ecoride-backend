@@ -96,7 +96,7 @@ router.get("/ride/:id", async (req, res) => {
   }
 })
 
-router.put("/update-ride/:id", authenticateToken, async (req, res) => {
+router.patch("/update-ride/:id", authenticateToken, async (req, res) => {
   try {
     const user = req.user
     const rideId = req.params.id
