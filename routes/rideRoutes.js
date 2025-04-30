@@ -159,7 +159,7 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 
     res.status(200).json({ message: "Rides recovered successfully", rides })
   } catch (error) {
-    console.error("Error while recovering rides :" + error)
+    console.error("Error recovering rides :" + error)
     res.status(500).json({ message: "Server error" + error.message })
   }
 })
