@@ -29,7 +29,6 @@ app.use(require("./routes/rideRoutes"))
 app.use(require("./routes/bookingRoutes"))
 app.use(require("./routes/reviewRoutes"))
 app.use(require("./routes/adminRoutes"))
-app.use(require("./routes/openRoutes"))
 
 const PORT = process.env.PORT || 5000
 console.log(`Server running on port: ${PORT}`)
