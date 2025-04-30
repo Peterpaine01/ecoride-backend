@@ -10,7 +10,7 @@ require("./config/mongodb")
 require("./config/cloudinary")
 
 const corsOptions = {
-  origin: "https://ecoride-mobility.netlify.app",
+  origin: ["http://localhost:5173/", "https://ecoride-mobility.netlify.app"],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }
