@@ -139,9 +139,13 @@ class BookingModel {
 
   static async getBookingsByUser(userId) {
     try {
+      console.log(userId)
+
       const bookings = await Booking.find({
-        "passenger.passengerId": userId,
+        "bookingDetails.passenger.passengerId": userId,
       }).populate("ride")
+
+      console.log(bookings)
 
       if (!bookings || bookings.length === 0) {
         throw new Error("No booking found for this user")
@@ -160,10 +164,8 @@ class BookingModel {
 
       return bookings
     } catch (error) {
-      console.error("Error while recovering user's bookings :" + error)
-      throw new Error(
-        "Error while recovering user's bookings : " + error.message
-      )
+      console.error("Error recovering user's bookings :" + error)
+      throw new Error("Error recovering user's bookings : " + error.message)
     }
   }
 
