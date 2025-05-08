@@ -79,7 +79,22 @@ class User extends Account {
   static async getUserById(account_id) {
     try {
       const [results] = await db.query(
-        "SELECT account_id, username, photo, credits, gender, is_driver FROM users WHERE account_id = ?",
+        `
+        SELECT 
+          u.account_id, 
+          u.username, 
+          u.photo, 
+          u.credits, 
+          u.gender, 
+          u.is_driver,
+          a.account_type,
+          r.label AS role_label
+        FROM users u
+        JOIN accounts a ON u.account_id = a.id
+        LEFT JOIN staff_members sm ON sm.account_id = a.id AND a.account_type = 'webmaster'
+        LEFT JOIN roles r ON r.id = sm.role_id
+        WHERE u.account_id = ?
+        `,
         [account_id]
       )
 
