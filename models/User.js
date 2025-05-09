@@ -170,7 +170,7 @@ class User extends Account {
       // Update accounts table (SQL)
       const updateAccountQuery = `
         UPDATE accounts 
-        SET email = ?${hashedPassword ? ", password = ?" : ""} 
+        SET email = ? ${hashedPassword ? ", password = ?" : ""} 
         WHERE id = ?;
     `
 

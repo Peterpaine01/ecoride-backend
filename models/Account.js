@@ -30,17 +30,18 @@ class Account {
     this.verification_token = verification_token
   }
 
-  static async createAccount(email, password) {
+  static async createAccount(email, password, account_type) {
     try {
       const hashedPassword = await hashPassword(password) // Hash before insertion
 
       const verificationToken = crypto.randomBytes(32).toString("hex") // Generate a random token
 
       const query =
-        "INSERT INTO accounts (email, password, account_type, verification_token) VALUES (?, ?, 'user', ?)"
+        "INSERT INTO accounts (email, password, account_type, verification_token) VALUES (?, ?, ?, ?)"
       const [results] = await db.query(query, [
         email,
         hashedPassword,
+        account_type,
         verificationToken,
       ])
       console.log("account results", results)

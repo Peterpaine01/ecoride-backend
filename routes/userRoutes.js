@@ -1,5 +1,4 @@
 const express = require("express")
-// can't use 'app' anymore (already set in index.js ), so I use express.Router to set my routes
 const router = express.Router()
 
 const fileUpload = require("express-fileupload")
@@ -34,7 +33,8 @@ router.post("/create-user", async (req, res) => {
 
   try {
     // Create account
-    const accountId = await Account.createAccount(email, password)
+    const account_type = "user"
+    const accountId = await Account.createAccount(email, password, account_type)
 
     // Create user inherited from account
     const userId = await User.createUser(

@@ -1,8 +1,8 @@
-const Account = require("./Account");
+const Account = require("./Account")
 
-const hashPassword = require("../utils/hashPassword");
+const hashPassword = require("../utils/hashPassword")
 
-const db = require("../config/mysql");
+const db = require("../config/mysql")
 
 class StaffMembers extends Account {
   constructor(
@@ -27,26 +27,26 @@ class StaffMembers extends Account {
       created_at,
       deleted_at,
       verification_token
-    );
-    this.firstname = firstname;
-    this.lastname = lastname;
-    this.roleId = roleId;
+    )
+    this.firstname = firstname
+    this.lastname = lastname
+    this.roleId = roleId
   }
 
   static async createStaffMembers(account_id, firstname, lastname, roleId) {
     try {
       const query =
-        "INSERT INTO staff_members (account_id, firstname, lastname, roleId) VALUES (?, ?, ?, ?)";
+        "INSERT INTO staff_members (account_id, first_name, last_name, role_id) VALUES (?, ?, ?, ?)"
       const [results] = await db.query(query, [
         account_id,
         firstname,
         lastname,
         roleId,
-      ]);
+      ])
 
-      return results[0];
+      return results[0]
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 
@@ -57,19 +57,22 @@ class StaffMembers extends Account {
           a.id AS account_id, 
           a.email, 
           a.account_status,
-          s.firstname, 
-          s.lastname,
-          r.label AS role
+          sm.first_name, 
+          sm.last_name,
+          r.label AS role,
+          r.id AS role_id,
+          a.account_status,
+          a.account_type
         FROM accounts a
-        JOIN staff_members s ON a.id = s.account_id
-        LEFT JOIN roles r ON s.role_id = r.id
+        JOIN staff_members sm ON a.id = sm.account_id
+        LEFT JOIN roles r ON sm.role_id = r.id
         WHERE a.id = ?
-      `;
-      const [results] = await db.query(query, [account_id]);
+      `
+      const [results] = await db.query(query, [account_id])
 
-      return results.length > 0 ? results[0] : null;
+      return results.length > 0 ? results[0] : null
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 
@@ -77,23 +80,23 @@ class StaffMembers extends Account {
     try {
       const query = `
         SELECT 
-          a.id AS account_id, 
+          sm.account_id, 
           a.email, 
           a.account_status,
-          s.firstname, 
-          s.lasttname,
+          sm.first_name, 
+          sm.last_name,
           r.label AS role
-        FROM accounts a
-        JOIN staff_members s ON a.id = s.account_id
-        LEFT JOIN roles r ON s.role_id = r.id
-        ORDER BY s.lastname ASC,  s.firstname ASC
-      `;
+        FROM staff_members sm
+        LEFT JOIN accounts a ON a.id = sm.account_id
+        LEFT JOIN roles r ON sm.role_id = r.id
+        ORDER BY sm.last_name ASC, sm.first_name ASC;
+      `
 
-      const [results] = await db.query(query);
+      const [results] = await db.query(query)
 
-      return results;
+      return results
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 
@@ -107,9 +110,12 @@ class StaffMembers extends Account {
         accountType,
         accountStatus,
         roleId,
-      } = updateData;
+      } = updateData
 
-      const hashedPassword = await hashPassword(password);
+      let hashedPassword = null
+      if (password && password.trim() !== "") {
+        hashedPassword = await hashPassword(password)
+      }
 
       // Update accounts table (SQL)
       const updateAccountQuery = `
@@ -117,27 +123,47 @@ class StaffMembers extends Account {
         SET email = ?, account_type = ?, account_status = ?
         ${hashedPassword ? ", password = ?" : ""}
         WHERE id = ?
-    `;
+      `
 
       const accountParams = hashedPassword
         ? [email, accountType, accountStatus, hashedPassword, userId]
-        : [email, accountType, accountStatus, userId];
+        : [email, accountType, accountStatus, userId]
 
-      await db.query(updateAccountQuery, accountParams);
+      await db.query(updateAccountQuery, accountParams)
 
       // Update staff_members table (SQL)
       const updateStaffQuery = `
         UPDATE staff_members 
-        SET firstname = ?, lastname = ?, role_id = ?
+        SET first_name = ?, last_name = ?, role_id = ?
         WHERE account_id = ?
-      `;
-      await db.query(updateStaffQuery, [firstname, lastname, roleId, userId]);
+      `
+      await db.query(updateStaffQuery, [firstname, lastname, roleId, userId])
 
-      return { message: "StaffMember updated successfully" };
+      return { message: "StaffMember updated successfully" }
     } catch (error) {
-      throw error;
+      throw error
+    }
+  }
+
+  static async deleteStaffMember(accountId) {
+    try {
+      await db.query("DELETE FROM staff_members WHERE account_id = ?", [
+        accountId,
+      ])
+
+      const [result] = await db.query("DELETE FROM accounts WHERE id = ?", [
+        accountId,
+      ])
+
+      if (result.affectedRows === 0) {
+        throw new Error("No account found with this ID.")
+      }
+
+      return { message: "StaffMember deleted successfully." }
+    } catch (error) {
+      throw error
     }
   }
 }
 
-module.exports = StaffMembers;
+module.exports = StaffMembers
