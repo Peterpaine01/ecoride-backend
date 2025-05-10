@@ -163,66 +163,100 @@ class User extends Account {
         accept_smoking,
         accept_animals,
         photoToUpdate,
+        account_status,
       } = updateData
 
-      const hashedPassword = await hashPassword(password)
+      // MAJ accounts
+      const accountFields = []
+      const accountValues = []
 
-      // Update accounts table (SQL)
-      const updateAccountQuery = `
-        UPDATE accounts 
-        SET email = ? ${hashedPassword ? ", password = ?" : ""} 
-        WHERE id = ?;
-    `
+      if (email) {
+        accountFields.push("email = ?")
+        accountValues.push(email)
+      }
 
-      const accountParams = hashedPassword
-        ? [email, hashedPassword, userId]
-        : [email, userId]
+      if (password) {
+        const hashedPassword = await hashPassword(password)
+        accountFields.push("password = ?")
+        accountValues.push(hashedPassword)
+      }
 
-      await db.query(updateAccountQuery, accountParams)
+      if (account_status) {
+        accountFields.push("account_status = ?")
+        accountValues.push(account_status)
+      }
 
-      // Update users table (SQL)
-      const updateUserQuery = `
-        UPDATE users 
-        SET username = ?, gender = ?, is_driver = ?, photo = ?
-        WHERE account_id = ?;
-      `
+      if (accountFields.length > 0) {
+        const updateAccountQuery = `
+          UPDATE accounts 
+          SET ${accountFields.join(", ")}
+          WHERE id = ?;
+        `
+        accountValues.push(userId)
+        await db.query(updateAccountQuery, accountValues)
+      }
 
-      await db.query(updateUserQuery, [
-        username,
-        gender,
-        is_driver,
-        photoToUpdate,
-        userId,
-      ])
+      // MAJ users
+      const userFields = []
+      const userValues = []
 
-      // Insert or update drivers table (SQL)
-      const checkDriverQuery = `SELECT * FROM drivers WHERE user_id = ?`
-      const [existingDriver] = await db.query(checkDriverQuery, [userId])
+      if (username) {
+        userFields.push("username = ?")
+        userValues.push(username)
+      }
 
-      // Check if driver already exist
-      if (existingDriver.length === 0) {
-        // if driver doesn't exist in drivers table, insert
-        const insertDriverQuery = `
-                INSERT INTO drivers (user_id, accept_smoking, accept_animals)
-                VALUES (?, ?, ?);
-            `
-        await db.query(insertDriverQuery, [
-          userId,
-          accept_smoking,
-          accept_animals,
-        ])
-      } else {
-        // if driver already exists in drivers table, update
-        const updateDriverQuery = `
-                UPDATE drivers 
-                SET accept_smoking = ?, accept_animals = ?
-                WHERE user_id = ?;
-            `
-        await db.query(updateDriverQuery, [
-          accept_smoking,
-          accept_animals,
-          userId,
-        ])
+      if (gender) {
+        userFields.push("gender = ?")
+        userValues.push(gender)
+      }
+
+      if (typeof is_driver !== "undefined") {
+        userFields.push("is_driver = ?")
+        userValues.push(is_driver)
+      }
+
+      if (photoToUpdate) {
+        userFields.push("photo = ?")
+        userValues.push(photoToUpdate)
+      }
+
+      if (userFields.length > 0) {
+        const updateUserQuery = `
+          UPDATE users 
+          SET ${userFields.join(", ")}
+          WHERE account_id = ?;
+        `
+        userValues.push(userId)
+        await db.query(updateUserQuery, userValues)
+      }
+
+      // MAJ drivers si is_driver
+      if (is_driver) {
+        const checkDriverQuery = `SELECT id FROM drivers WHERE user_id = ?`
+        const [existingDriver] = await db.query(checkDriverQuery, [userId])
+
+        if (existingDriver.length === 0) {
+          const insertDriverQuery = `
+            INSERT INTO drivers (user_id, accept_smoking, accept_animals)
+            VALUES (?, ?, ?)
+          `
+          await db.query(insertDriverQuery, [
+            userId,
+            accept_smoking ?? false,
+            accept_animals ?? false,
+          ])
+        } else {
+          const updateDriverQuery = `
+            UPDATE drivers 
+            SET accept_smoking = ?, accept_animals = ?
+            WHERE user_id = ?
+          `
+          await db.query(updateDriverQuery, [
+            accept_smoking ?? false,
+            accept_animals ?? false,
+            userId,
+          ])
+        }
       }
 
       return { message: "User updated successfully" }
@@ -239,26 +273,27 @@ class User extends Account {
     const updateUserQuery = `
       UPDATE users
       SET 
-        email = ?,
         username = 'Utilisateur supprimé',
         photo = ?
-      WHERE id = ?
+      WHERE account_id = ?
     `
-    await db.query(updateUserQuery, [anonymizedEmail, photo, userId])
+    await db.query(updateUserQuery, [photo, userId])
 
     const updateAccountQuery = `
       UPDATE accounts
       SET 
+        email = ?,
         account_status = 'deleted',
         deleted_at = NOW()
       WHERE id = ?
     `
-    await db.query(updateAccountQuery, [userId])
+    await db.query(updateAccountQuery, [anonymizedEmail, userId])
   }
 
   static async hardDeleteUserById(userId) {
+    console.log("hardDeleteUserById")
     await db.execute(`DELETE FROM drivers WHERE user_id = ?`, [userId])
-    await db.execute(`DELETE FROM users WHERE id = ?`, [userId])
+    await db.execute(`DELETE FROM users WHERE account_id = ?`, [userId])
     await db.execute(`DELETE FROM accounts WHERE id = ?`, [userId])
   }
 }

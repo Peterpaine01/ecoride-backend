@@ -116,52 +116,35 @@ router.get("/users", async (req, res) => {
 })
 
 // UPDATE - update a user
-router.put(
+router.patch(
   "/update-user/:id",
   fileUpload(),
   authenticateToken,
   async (req, res) => {
     const userId = req.params.id
-    const {
-      username,
-      gender,
-      is_driver,
-      email,
-      password,
-      accept_smoking,
-      accept_animals,
-    } = req.body
     const photo = req.files?.photo
-    let photoOnCloudinary = ""
+    let photoToUpdate
+
     try {
       if (photo) {
-        // transforming image in string readable by cloudinary
         const transformedPicture = convertToBase64(photo)
-        // sending request to cloudianry for uploading my image
         const result = await cloudinary.uploader.upload(transformedPicture, {
           folder: `ecoride/users/user-${userId}`,
         })
-
-        photoOnCloudinary = result
+        photoToUpdate = result.secure_url
       }
-      console.log(photoOnCloudinary.secure_url)
-      const photoToUpdate = photoOnCloudinary.secure_url
 
-      await User.updateUser(userId, {
-        username,
-        gender,
-        is_driver,
-        email,
-        password,
-        accept_smoking,
-        accept_animals,
+      const updateFields = {
+        ...req.body,
         photoToUpdate,
-      })
+      }
 
-      return res.status(200).json({ message: "User updated successfully" })
+      await User.updateUser(userId, updateFields)
+
+      res.status(200).json({ message: "User updated successfully" })
     } catch (error) {
-      console.error("Error while updating user :" + error)
-      return res.status(500).json({ message: "Error server" + error.message })
+      console.error("Error while updating user:", error)
+      res.status(500).json({ message: "Erreur serveur : " + error.message })
     }
   }
 )
@@ -171,11 +154,11 @@ router.patch("/soft-delete-user/:id", authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id
 
-    if (req.user.id !== userId) {
-      return res
-        .status(403)
-        .json({ error: "Acces denied. You can only delete your own accont." })
-    }
+    // if (req.user.id !== userId) {
+    //   return res
+    //     .status(403)
+    //     .json({ error: "Acces denied. You can only delete your own accont." })
+    // }
 
     await User.softDeleteUserById(userId)
     res.status(200).json({ message: "User anonymised successfully." })
@@ -186,12 +169,14 @@ router.patch("/soft-delete-user/:id", authenticateToken, async (req, res) => {
 })
 
 router.delete(
-  "/hard-delete-user//:id",
+  "/hard-delete-user/:id",
   authenticateToken,
   isAdmin,
   async (req, res) => {
     try {
       const userId = req.params.id
+      console.log(userId)
+
       await User.hardDeleteUserById(userId)
       res.status(200).json({ message: "User deleted permanently." })
     } catch (error) {
