@@ -67,32 +67,40 @@ router.get("/ride/:id", async (req, res) => {
   try {
     const { id } = req.params
 
-    // Get ride by id
     const ride = await RideModel.getRideById(id)
     if (!ride) {
       return res.status(404).json({ message: "Ride not found" })
     }
 
-    // Get driver's infos
     const driver = await User.getUserById(ride.driver.driverId)
     const driverDetails = await Driver.getDriverById(ride.driver.driverId)
 
-    // Get car's details
     const car = await Car.getCarById(ride.car.carId)
 
-    // Concate details
     const rideWithDetails = {
-      ...ride.toObject(), // Convert to JS Objet
+      ...ride.toObject(),
       driver: {
         ...driver,
         ...driverDetails,
       },
-      car: car,
+      car,
+      bookings: ride.bookings,
     }
 
     res.status(200).json(rideWithDetails)
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message })
+  }
+})
+
+// GET bookings for a given ride ID
+router.get("/ride/:rideId/bookings", async (req, res) => {
+  try {
+    const { rideId } = req.params
+    const bookings = await RideModel.getBookingsByRideId(rideId)
+    res.json(bookings)
+  } catch (error) {
+    res.status(404).json({ message: error.message })
   }
 })
 

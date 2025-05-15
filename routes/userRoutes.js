@@ -95,7 +95,7 @@ router.get("/user/:id", async (req, res) => {
 
     user.is_driver = Boolean(user.is_driver)
 
-    console.log(user)
+    // console.log(user)
 
     return res.status(200).json(user)
   } catch (error) {
@@ -175,7 +175,7 @@ router.delete(
   async (req, res) => {
     try {
       const userId = req.params.id
-      console.log(userId)
+      // console.log(userId)
 
       await User.hardDeleteUserById(userId)
       res.status(200).json({ message: "User deleted permanently." })

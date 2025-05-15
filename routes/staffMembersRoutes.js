@@ -46,7 +46,6 @@ router.post("/create-staff", async (req, res) => {
 
 router.get("/staff-members", authenticateToken, isAdmin, async (req, res) => {
   try {
-    console.log("hey")
     const staffList = await StaffMembers.getAllStaffMembers()
     console.log(staffList)
 

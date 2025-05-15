@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer")
 
 const sendNotificationRideEmail = async (
   passengerData,
@@ -7,7 +7,7 @@ const sendNotificationRideEmail = async (
   bookingId
 ) => {
   try {
-    console.log("passengerData ->", passengerData);
+    // console.log("passengerData ->", passengerData);
 
     let transporter = nodemailer.createTransport({
       host: "smtp.ethereal.email",
@@ -17,7 +17,7 @@ const sendNotificationRideEmail = async (
         user: "burley.bode10@ethereal.email", // user Ethereal
         pass: "uKPZ5DjVXVgUXAAeEb", // pass Ethereal
       },
-    });
+    })
 
     // Ride booked
     const mailOptionsBookedRide = {
@@ -31,7 +31,7 @@ const sendNotificationRideEmail = async (
         <a href="${process.env.FRONT_URL}/vos-trajets">Voir mon trajet</a>
         <p>Merci d'utiliser Ecoride !</p>
       `,
-    };
+    }
 
     // Ride started / ongoing
     const mailOptionsStartedRide = {
@@ -43,9 +43,9 @@ const sendNotificationRideEmail = async (
         <p>Votre trajet a commencé. Nous espérons que vous avez bien pris place à bord.</p>
         <p>Bon voyage avec Ecoride !</p>
       `,
-    };
+    }
 
-    const validateUrl = `${process.env.FRONT_URL}/valider-mon-trajet/${bookingId}`;
+    const validateUrl = `${process.env.FRONT_URL}/valider-mon-trajet/${bookingId}`
 
     // Ride completed
     const mailOptionsCompletedRide = {
@@ -59,7 +59,7 @@ const sendNotificationRideEmail = async (
         <a href="${validateUrl}">Valider mon trajet</a>
         <p>Merci d'utiliser Ecoride !</p>
       `,
-    };
+    }
 
     // Ride canceled
     const mailOptionsCanceledRide = {
@@ -73,27 +73,27 @@ const sendNotificationRideEmail = async (
         <a href="${process.env.FRONT_URL}">Trouver un autre trajet</a>
         <p>Merci d'utiliser Ecoride !</p>
       `,
-    };
+    }
 
     if (bookingStatus === "forthcoming") {
-      await transporter.sendMail(mailOptionsBookedRide);
-      console.log(`Confirm Ride Email send to ${passengerData.email}`);
+      await transporter.sendMail(mailOptionsBookedRide)
+      console.log(`Confirm Ride Email send to ${passengerData.email}`)
     }
     if (bookingStatus === "ongoing") {
-      await transporter.sendMail(mailOptionsStartedRide);
-      console.log(`Started Ride Email send to ${passengerData.email}`);
+      await transporter.sendMail(mailOptionsStartedRide)
+      console.log(`Started Ride Email send to ${passengerData.email}`)
     }
     if (bookingStatus === "completed") {
-      await transporter.sendMail(mailOptionsCompletedRide);
-      console.log(`Validation Ride Email send to ${passengerData.email}`);
+      await transporter.sendMail(mailOptionsCompletedRide)
+      console.log(`Validation Ride Email send to ${passengerData.email}`)
     }
     if (bookingStatus === "canceled") {
-      await transporter.sendMail(mailOptionsCanceledRide);
-      console.log(`Validation Ride Email send to ${passengerData.email}`);
+      await transporter.sendMail(mailOptionsCanceledRide)
+      console.log(`Validation Ride Email send to ${passengerData.email}`)
     }
   } catch (error) {
-    console.error("Error while sending email:" + error);
+    console.error("Error while sending email:" + error)
   }
-};
+}
 
-module.exports = sendNotificationRideEmail;
+module.exports = sendNotificationRideEmail

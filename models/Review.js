@@ -1,8 +1,8 @@
-const db = require("../config/mysql");
-const mongoose = require("../config/mongodb");
+const db = require("../config/mysql")
+const mongoose = require("../config/mongodb")
 
 // Import models
-const { Booking, BookingModel } = require("./Booking");
+const { Booking, BookingModel } = require("./Booking")
 
 const reviewSchema = new mongoose.Schema({
   title: String,
@@ -14,56 +14,77 @@ const reviewSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Booking",
   },
+  passengerId: Number,
+  driverId: Number,
   isPublished: {
     type: Boolean,
     default: false,
   },
-});
+})
 
-const Review = mongoose.model("Review", reviewSchema);
+const Review = mongoose.model("Review", reviewSchema)
 
 class ReviewModel {
   static async createReview(bookingId, reviewData) {
+    const { BookingModel } = require("./Booking")
     try {
-      const newReview = new Review({ ...reviewData, booking: bookingId });
-      console.log(newReview);
+      const bookingToReview = await Booking.findById(bookingId).populate("ride")
+      console.log(
+        "bookingToReview.bookingDetails.driver:",
+        bookingToReview.bookingDetails.driver
+      )
 
-      const savedReview = await newReview.save();
+      const passenegrId = bookingToReview.bookingDetails.passenger.passengerId
+      const driverId = bookingToReview.bookingDetails.driver.driverId
 
-      const booking = await BookingModel.getBookingById(bookingId).populate(
-        "ride"
-      );
+      if (!driverId) {
+        throw new Error("driverId is missing from bookingToReview")
+      }
+
+      const newReview = new Review({
+        ...reviewData,
+        booking: bookingId,
+        passengerId: passenegrId,
+        driverId: driverId,
+      })
+
+      const savedReview = await newReview.save()
 
       if (reviewData.wasRideOk === true) {
-        const creditsPerPassenger = booking.ride.creditsPerPassenger;
-        const EcorideCommission = 2;
+        const creditsPerPassenger = bookingToReview.ride.creditsPerPassenger
+        const EcorideCommission = 2
+        const totalReservedSeats = bookingToReview.bookingDetails.seats
 
-        const creditsToDriver = creditsPerPassenger - EcorideCommission;
+        const creditsToDriver =
+          (creditsPerPassenger - EcorideCommission) * totalReservedSeats
 
         const updateUserQuery = `
           UPDATE users 
           SET credits = ?
           WHERE account_id = ?;
-        `;
+        `
 
-        await db.query(updateUserQuery, [creditsToDriver, userId]);
+        await db.query(updateUserQuery, [creditsToDriver, driverId])
+        console.log("driver crédité")
       }
 
-      await ReviewModel.setSummary(reviewData.driverId);
+      await BookingModel.updateBooking(bookingId, { bookingStatus: "reviewed" })
 
-      return savedReview;
+      await ReviewModel.setSummary(driverId)
+
+      return savedReview
     } catch (error) {
-      throw new Error("Error while creating review: " + error.message);
+      throw new Error("Error while creating review: " + error.message)
     }
   }
 
   static async getReviewById(reviewId) {
     try {
-      const review = await Review.findById(reviewId).populate("booking");
+      const review = await Review.findById(reviewId).populate("booking")
 
-      return review;
+      return review
     } catch (error) {
-      throw new Error("Review not found: " + error.message);
+      throw new Error("Review not found: " + error.message)
     }
   }
 
@@ -71,12 +92,12 @@ class ReviewModel {
     try {
       const reviews = await Review.find({
         "driver.driverId": driverId,
-      }).populate("booking");
+      }).populate("booking")
 
-      return reviews;
+      return reviews
     } catch (error) {
-      console.error("Error fetching review: " + error);
-      throw new Error("Error fetching review: " + error.message);
+      console.error("Error fetching review: " + error)
+      throw new Error("Error fetching review: " + error.message)
     }
   }
 
@@ -92,10 +113,10 @@ class ReviewModel {
             totalReviews: { $sum: 1 }, // Count reviews
           },
         },
-      ]);
+      ])
 
-      const averageRating = result.length > 0 ? result[0].avgRating : 0;
-      const totalReviews = result.length > 0 ? result[0].totalReviews : 0;
+      const averageRating = result.length > 0 ? result[0].avgRating : 0
+      const totalReviews = result.length > 0 ? result[0].totalReviews : 0
 
       // Insert or Update in reviews_summaries table
       await db.query(
@@ -105,9 +126,9 @@ class ReviewModel {
          average_rating = VALUES(average_rating), 
          total_reviews = VALUES(total_reviews)`,
         [driverId, averageRating, totalReviews]
-      );
+      )
     } catch (error) {
-      throw new Error("Error interting/updating review: " + error.message);
+      throw new Error("Error interting/updating review: " + error.message)
     }
   }
 
@@ -118,19 +139,19 @@ class ReviewModel {
          FROM reviews_summaries 
          WHERE driver_id = ?`,
         [driverId]
-      );
+      )
 
       if (rows.length > 0) {
         return {
           averageRating: rows[0].average_rating,
           totalReviews: rows[0].total_reviews,
-        };
+        }
       }
-      return { averageRating: 0, totalReviews: 0 }; // Default values if no data
+      return { averageRating: 0, totalReviews: 0 } // Default values if no data
     } catch (error) {
-      throw new Error("Error fetching summary: " + error.message);
+      throw new Error("Error fetching summary: " + error.message)
     }
   }
 }
 
-module.exports = { Review, ReviewModel };
+module.exports = { Review, ReviewModel }

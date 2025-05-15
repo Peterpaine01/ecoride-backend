@@ -33,8 +33,6 @@ class Car {
     available_seats,
     driver_id,
   }) {
-    console.log(brand_id)
-
     try {
       const query = `
         INSERT INTO cars (registration_number, first_registration_date, model, color, energy_id, brand_id, available_seats, driver_id)
@@ -50,8 +48,6 @@ class Car {
         available_seats,
         driver_id,
       ])
-
-      console.log(result)
 
       return result.insertId // Return car id
     } catch (error) {
@@ -90,8 +86,6 @@ class Car {
 
   static async getCarsByDriver(driverId) {
     try {
-      console.log(driverId)
-
       const query = `
           SELECT 
           cars.id, 

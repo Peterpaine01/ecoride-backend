@@ -44,50 +44,8 @@ router.get("/booking/:id", async (req, res) => {
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" })
     }
-    // Get driver's infos
-    const driver = await User.getUserById(
-      booking.bookingDetails.driver.driverId
-    )
 
-    const driverDetails = await Driver.getDriverById(
-      booking.bookingDetails.driver.driverId
-    )
-
-    // Get passenger's infos
-    const passenger = await User.getUserById(
-      booking.bookingDetails.passenger.passengerId
-    )
-
-    // Get car's details
-    const car = await db.query("SELECT * FROM cars WHERE id = ?", [
-      booking.ride.car.carId,
-    ])
-
-    const carDetails = car[0][0]
-    console.log("carDetails ->", carDetails)
-    const bookingWithDetails = {
-      _id: booking._id,
-      bookingDetails: {
-        passenger: passenger,
-        driver: { ...driver, driverDetails },
-        seats: booking.bookingDetails.seats,
-        totalCredits: booking.bookingDetails.totalCredits,
-      },
-      ride: {
-        _id: booking.ride._id,
-        departureDate: booking.ride.departureDate,
-        departureAddress: booking.ride.departureAddress,
-        destinationAddress: booking.ride.destinationAddress,
-        duration: booking.ride.duration,
-        availableSeats: booking.ride.availableSeats,
-        creditsPerPassenger: booking.ride.creditsPerPassenger,
-        description: booking.ride.description,
-        rideStatus: booking.ride.rideStatus,
-        car: { ...carDetails },
-      },
-    }
-
-    res.status(200).json(bookingWithDetails)
+    res.status(200).json(booking)
   } catch (error) {
     return res.status(500).json({ message: "Error server" + error.message })
   }
@@ -108,7 +66,7 @@ router.get("/passenger-bookings", authenticateToken, async (req, res) => {
   }
 })
 
-router.put("/update-booking/:id", async (req, res) => {
+router.patch("/update-booking/:id", authenticateToken, async (req, res) => {
   const { id } = req.params
   const updateData = req.body
 
@@ -117,10 +75,8 @@ router.put("/update-booking/:id", async (req, res) => {
 
     res.status(200).json(updatedBooking)
   } catch (error) {
-    console.error("Error while updating booking: " + error)
-    res
-      .status(500)
-      .json({ message: "Error while updating booking:" + error.message })
+    console.error("Error updating booking: " + error)
+    res.status(500).json({ message: "Error updating booking:" + error.message })
   }
 })
 

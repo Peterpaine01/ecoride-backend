@@ -23,7 +23,7 @@ const bookingSchema = new mongoose.Schema({
   },
   bookingStatus: {
     type: String,
-    enum: ["forthcoming", "canceled", "ongoing", "completed"],
+    enum: ["forthcoming", "canceled", "ongoing", "completed", "reviewed"],
     default: "forthcoming",
   },
 })
@@ -41,7 +41,7 @@ class BookingModel {
 
       // Get ride by id
       const ride = await RideModel.getRideById(rideId)
-      console.log("ride", ride)
+      // console.log("ride", ride)
       if (!ride) {
         throw new Error("Ride not found")
       }
@@ -57,7 +57,7 @@ class BookingModel {
       if (userResult.length === 0) {
         throw new Error("User not found")
       }
-      console.log(userResult[0])
+      // console.log(userResult[0])
       const userCredits = userResult[0].credits
       const totalCredits = ride.creditsPerPassenger * seats
 
@@ -66,8 +66,8 @@ class BookingModel {
       }
 
       // Check if enough available seats
-      if (ride.availableSeats < seats) {
-        throw new Error("Not enough available seats")
+      if (ride.remainingSeats < seats) {
+        throw new Error("Not enough remainingSeats seats")
       }
 
       // Deduct credits from passenger's credits in users table (SQL)
@@ -77,7 +77,7 @@ class BookingModel {
       )
 
       // Deduct number of seat from ride (MongoDB)
-      ride.availableSeats -= seats
+      ride.remainingSeats -= seats
 
       // Create booking (MongoDB)
       const newBooking = new Booking({
@@ -127,9 +127,53 @@ class BookingModel {
 
   // Get booking by id
   static async getBookingById(bookingId) {
+    const Driver = require("../models/Driver")
     try {
-      const booking = await Booking.findById(bookingId).populate("ride")
-      return booking
+      const booking = await Booking.findById(bookingId)
+
+      // Get driver's infos
+      const driver = await User.getUserById(
+        booking.bookingDetails.driver.driverId
+      )
+
+      const driverDetails = await Driver.getDriverById(
+        booking.bookingDetails.driver.driverId
+      )
+
+      // Get passenger's infos
+      const passenger = await User.getUserById(
+        booking.bookingDetails.passenger.passengerId
+      )
+
+      // Get car's details
+      // const car = await db.query("SELECT * FROM cars WHERE id = ?", [
+      //   booking.ride.car.carId,
+      // ])
+
+      // const carDetails = car[0][0]
+      // console.log("carDetails ->", carDetails)
+      const bookingWithDetails = {
+        _id: booking._id,
+        bookingDetails: {
+          passenger: passenger,
+          driver: { ...driver, driverDetails },
+          seats: booking.bookingDetails.seats,
+          totalCredits: booking.bookingDetails.totalCredits,
+        },
+        // ride: {
+        //   _id: booking.ride._id,
+        //   departureDate: booking.ride.departureDate,
+        //   departureAddress: booking.ride.departureAddress,
+        //   destinationAddress: booking.ride.destinationAddress,
+        //   duration: booking.ride.duration,
+        //   availableSeats: booking.ride.availableSeats,
+        //   creditsPerPassenger: booking.ride.creditsPerPassenger,
+        //   description: booking.ride.description,
+        //   rideStatus: booking.ride.rideStatus,
+        //   car: { ...carDetails },
+        // },
+      }
+      return bookingWithDetails
     } catch (error) {
       console.log("Booking not found: " + error)
 
@@ -139,13 +183,11 @@ class BookingModel {
 
   static async getBookingsByUser(userId) {
     try {
-      console.log(userId)
-
       const bookings = await Booking.find({
         "bookingDetails.passenger.passengerId": userId,
       }).populate("ride")
 
-      console.log(bookings)
+      // console.log(bookings)
 
       if (!bookings || bookings.length === 0) {
         throw new Error("No booking found for this user")
@@ -173,6 +215,8 @@ class BookingModel {
   static async updateBooking(bookingId, updateData) {
     const { Ride } = require("../models/Ride")
     try {
+      console.log("updateData", updateData)
+
       const updatedBooking = await Booking.findByIdAndUpdate(
         bookingId,
         updateData,
@@ -180,7 +224,7 @@ class BookingModel {
           new: true,
         }
       )
-
+      console.log("updatedBooking", updatedBooking)
       if (!updatedBooking) {
         throw new Error("Booking not found")
       }
@@ -190,11 +234,11 @@ class BookingModel {
         const ride = await Ride.findById(updatedBooking.ride)
 
         if (ride) {
-          // Hand over available seats
-          ride.availableSeats += updatedBooking.bookingDetails.seats
+          ride.remainingSeats += updatedBooking.bookingDetails.seats
 
-          // Withdraw booking id from ride -> if b === id, exclude from array
-          ride.bookings = ride.bookings.filter((b) => b.toString() !== id)
+          ride.bookings = ride.bookings.filter(
+            (b) => b.toString() !== bookingId.toString()
+          )
           await ride.save()
         }
 
@@ -204,16 +248,16 @@ class BookingModel {
           ride.creditsPerPassenger * updatedBooking.bookingDetails.seats
 
         // Update passenger's credits in table users (SQL)
-        await db.query("UPDATE users SET credits = credits + ? WHERE id = ?", [
-          refundCredits,
-          passengerId,
-        ])
+        await db.query(
+          "UPDATE users SET credits = credits + ? WHERE account_id = ?",
+          [refundCredits, passengerId]
+        )
       }
 
-      res.status(200).json({
+      return {
         message: "Booking updated successfully",
         booking: updatedBooking,
-      })
+      }
     } catch (error) {
       console.error("Error while updating user's booking:" + error)
       throw new Error("Error while updating user's booking: " + error.message)
@@ -224,7 +268,7 @@ class BookingModel {
     try {
       // Get all bookings with rideId
       const bookings = await Booking.find({ ride: rideId })
-      console.log(bookings)
+      // console.log(bookings)
 
       if (bookings.length === 0) {
         console.log("No bookings found for this ride:" + rideId)
@@ -247,6 +291,11 @@ class BookingModel {
           passengerId,
           email: passengerAccount.email,
           username: passengerDetails.username,
+        }
+
+        if (!passengerData.email || !passengerData.username) {
+          console.warn("Missing passenger data for booking ID: " + booking._id)
+          continue
         }
 
         // Send notification email according to booking status

@@ -10,14 +10,26 @@ require("./config/mongodb")
 require("./config/cloudinary")
 
 const corsOptions = {
-  origin: ["http://localhost:5173/", "https://ecoride-mobility.netlify.app"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "https://ecoride-mobility.netlify.app",
+    ]
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error("Not allowed by CORS"))
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 }
 
 // create server
 const app = express()
-app.use(cors())
+app.use(cors(corsOptions))
+app.options("*", cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
@@ -32,6 +44,7 @@ app.use(require("./routes/adminRoutes"))
 app.use(require("./routes/staffMembersRoutes"))
 app.use(require("./routes/rolesRoutes"))
 app.use(require("./routes/statisticsRoutes"))
+app.use(require("./routes/openRoutes"))
 
 const PORT = process.env.PORT || 5000
 console.log(`Server running on port: ${PORT}`)

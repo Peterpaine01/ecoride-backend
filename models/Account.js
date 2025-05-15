@@ -44,7 +44,7 @@ class Account {
         account_type,
         verificationToken,
       ])
-      console.log("account results", results)
+      // console.log("account results", results)
 
       // Send email with verification link
       await Account.sendVerificationEmail(email, verificationToken)
@@ -83,8 +83,7 @@ class Account {
     }
 
     try {
-      await transporter.sendMail(mailOptions)
-      console.log("Email send to " + email)
+      await transporter.sendMail(mailOptions)("Email send to " + email)
     } catch (error) {
       console.error("Error while sending email:" + error)
     }
@@ -92,8 +91,6 @@ class Account {
 
   static async login(email, password) {
     try {
-      console.log(email)
-
       const query = "SELECT * FROM accounts WHERE email = ?"
       const [results] = await db.query(query, [email])
 

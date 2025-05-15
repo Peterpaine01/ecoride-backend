@@ -1,24 +1,27 @@
-import express from "express"
-import axios from "axios"
+const express = require("express")
 const router = express.Router()
+const axios = require("axios")
 
-router.post("/route", async (req, res) => {
+const ORS_API_KEY = process.env.ORS_API_KEY
+
+router.post("/directions", async (req, res) => {
   try {
+    const { coordinates } = req.body
     const response = await axios.post(
       "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
-      req.body,
+      { coordinates },
       {
         headers: {
-          Authorization: `Bearer ${process.env.ORS_API_KEY}`,
+          Authorization: ORS_API_KEY,
           "Content-Type": "application/json",
         },
       }
     )
     res.json(response.data)
-  } catch (error) {
-    console.error(error.message)
-    res.status(500).json({ error: "Erreur OpenRouteService" })
+  } catch (err) {
+    console.error("ORS error:", err.response?.data || err.message)
+    res.status(500).json({ error: "Failed to get route" })
   }
 })
 
-export default router
+module.exports = router

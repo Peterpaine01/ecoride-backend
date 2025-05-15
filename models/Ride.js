@@ -2,6 +2,7 @@ const mongoose = require("../config/mongodb")
 const db = require("../config/mysql")
 
 const Driver = require("./Driver")
+const { Booking, BookingModel } = require("./Booking")
 
 const normalizeCity = require("../utils/normalizeCity")
 
@@ -12,6 +13,7 @@ const rideSchema = new mongoose.Schema({
   destinationAddress: Object,
   duration: Number,
   availableSeats: Number,
+  remainingSeats: Number,
   creditsPerPassenger: Number,
   description: String,
   rideStatus: {
@@ -63,6 +65,7 @@ class RideModel {
         },
         duration,
         availableSeats,
+        remainingSeats: availableSeats,
         creditsPerPassenger,
         description,
         driver: { driverId: userId },
@@ -78,10 +81,45 @@ class RideModel {
 
   static async getRideById(rideId) {
     try {
-      const ride = await Ride.findById(rideId)
+      const ride = await Ride.findById(rideId).populate("bookings")
       return ride
     } catch (error) {
       throw new Error("Ride not found: " + error.message)
+    }
+  }
+
+  static async getBookingsByRideId(rideId) {
+    try {
+      const ride = await Ride.findById(rideId)
+      if (!ride) {
+        throw new Error("Ride not found")
+      }
+
+      // Récupère les IDs des bookings (présumés stockés comme ObjectIds dans ride.bookings)
+      const bookingIds = ride.bookings || []
+      // console.log("bookingIds", bookingIds)
+
+      // Appelle getBookingById pour chaque ID
+      const populatedBookings = await Promise.all(
+        bookingIds.map(async (bookingId) => {
+          try {
+            return await BookingModel.getBookingById(bookingId)
+          } catch (error) {
+            console.warn(
+              `Booking ${bookingId} could not be fetched:`,
+              error.message
+            )
+            return null // tu peux aussi filtrer après
+          }
+        })
+      )
+      console.log("populatedBookings", populatedBookings)
+
+      // Nettoie les bookings nulls (éventuelles erreurs)
+      return populatedBookings.filter((b) => b !== null)
+    } catch (error) {
+      console.error("Error fetching bookings for ride:", error)
+      throw new Error("Error fetching bookings for ride: " + error.message)
     }
   }
 
@@ -111,7 +149,6 @@ class RideModel {
     let {
       departureCity,
       destinationCity,
-      availableSeats,
       departureDate,
       maxCreditsPerPassenger,
       maxDuration,
@@ -120,6 +157,7 @@ class RideModel {
       minRating,
       acceptSmoking,
       acceptAnimals,
+      remainingSeats,
     } = searchData
 
     const isFuzzy = fuzzy === "true"
@@ -127,22 +165,22 @@ class RideModel {
     try {
       const filter = { rideStatus: "forthcoming" }
 
-      if (departureCity) {
+      if (departureCity?.trim()) {
         filter["departureAddress.normalizedCity"] = {
           $exists: true,
           $regex: new RegExp(normalizeCity(departureCity), "i"),
         }
       }
 
-      if (destinationCity) {
+      if (destinationCity?.trim()) {
         filter["destinationAddress.normalizedCity"] = {
           $exists: true,
           $regex: new RegExp(normalizeCity(destinationCity), "i"),
         }
       }
 
-      if (!isNaN(Number(availableSeats))) {
-        filter.availableSeats = { $gte: Number(availableSeats) }
+      if (!isNaN(Number(remainingSeats))) {
+        filter.remainingSeats = { $gte: Number(remainingSeats) }
       }
 
       const now = new Date()
