@@ -33,7 +33,6 @@ router.post("/create-review/:id", authenticateToken, async (req, res) => {
 
 router.get("/reviews-driver/:id", async (req, res) => {
   const driverId = req.params.id
-  console.log("reviews route")
 
   try {
     const reviews = await ReviewModel.getReviewsByDriver(driverId)

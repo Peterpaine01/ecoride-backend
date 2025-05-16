@@ -238,37 +238,29 @@ class User extends Account {
       }
 
       // MAJ drivers si is_driver
-      if (is_driver) {
-        const checkDriverQuery = `SELECT user_id FROM drivers WHERE user_id = ?`
-        const [existingDriver] = await db.query(checkDriverQuery, [userId])
+      const [existingDriver] = await db.query(
+        `SELECT user_id FROM drivers WHERE user_id = ?`,
+        [userId]
+      )
 
-        const safeAcceptSmoking =
-          typeof accept_smoking === "number" ? accept_smoking : 0
-        const safeAcceptAnimals =
-          typeof accept_animals === "number" ? accept_animals : 0
+      const safeAcceptSmoking = parseInt(accept_smoking) === 1 ? 1 : 0
+      const safeAcceptAnimals = parseInt(accept_animals) === 1 ? 1 : 0
 
-        if (existingDriver.length === 0) {
-          const insertDriverQuery = `
-            INSERT INTO drivers (user_id, accept_smoking, accept_animals)
-            VALUES (?, ?, ?)
-          `
-          await db.query(insertDriverQuery, [
-            userId,
-            safeAcceptSmoking,
-            safeAcceptAnimals,
-          ])
-        } else {
-          const updateDriverQuery = `
-            UPDATE drivers 
-            SET accept_smoking = ?, accept_animals = ?
-            WHERE user_id = ?
-          `
-          await db.query(updateDriverQuery, [
-            safeAcceptSmoking,
-            safeAcceptAnimals,
-            userId,
-          ])
-        }
+      if (is_driver && existingDriver.length === 0) {
+        // Créer un nouveau driver
+        await db.query(
+          `INSERT INTO drivers (user_id, accept_smoking, accept_animals)
+          VALUES (?, ?, ?)`,
+          [userId, safeAcceptSmoking, safeAcceptAnimals]
+        )
+      } else if (existingDriver.length > 0) {
+        // Mettre à jour le driver existant
+        await db.query(
+          `UPDATE drivers
+          SET accept_smoking = ?, accept_animals = ?
+          WHERE user_id = ?`,
+          [safeAcceptSmoking, safeAcceptAnimals, userId]
+        )
       }
 
       return { message: "User updated successfully" }

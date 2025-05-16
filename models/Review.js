@@ -93,8 +93,6 @@ class ReviewModel {
         reviews.map(async (review) => {
           const passengerId = review.passengerId
 
-          console.log("passengerId", passengerId)
-
           let passengerInfo = null
           if (passengerId) {
             try {

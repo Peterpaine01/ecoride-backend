@@ -37,7 +37,7 @@ class Account {
       const verificationToken = crypto.randomBytes(32).toString("hex") // Generate a random token
 
       const query =
-        "INSERT INTO accounts (email, password, account_type, verification_token) VALUES (?, ?, ?, ?)"
+        "INSERT INTO accounts (email, password, account_type, verification_token, account_status) VALUES (?, ?, ?, ?, 'active')"
       const [results] = await db.query(query, [
         email,
         hashedPassword,
