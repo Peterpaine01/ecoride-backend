@@ -3,6 +3,7 @@ const mongoose = require("../config/mongodb")
 
 // Import models
 const { Booking, BookingModel } = require("./Booking")
+const User = require("../models/User")
 
 const reviewSchema = new mongoose.Schema({
   title: String,
@@ -29,10 +30,6 @@ class ReviewModel {
     const { BookingModel } = require("./Booking")
     try {
       const bookingToReview = await Booking.findById(bookingId).populate("ride")
-      console.log(
-        "bookingToReview.bookingDetails.driver:",
-        bookingToReview.bookingDetails.driver
-      )
 
       const passenegrId = bookingToReview.bookingDetails.passenger.passengerId
       const driverId = bookingToReview.bookingDetails.driver.driverId
@@ -90,11 +87,34 @@ class ReviewModel {
 
   static async getReviewsByDriver(driverId) {
     try {
-      const reviews = await Review.find({
-        "driver.driverId": driverId,
-      }).populate("booking")
+      const reviews = await Review.find({ driverId }).populate("booking")
 
-      return reviews
+      const reviewsWithPassengerInfo = await Promise.all(
+        reviews.map(async (review) => {
+          const passengerId = review.passengerId
+
+          console.log("passengerId", passengerId)
+
+          let passengerInfo = null
+          if (passengerId) {
+            try {
+              passengerInfo = await User.getUserById(passengerId)
+            } catch (err) {
+              console.error(
+                `Erreur lors de la récupération de l'utilisateur ${passengerId}:`,
+                err.message
+              )
+            }
+          }
+
+          return {
+            ...review.toObject(),
+            passenger: passengerInfo,
+          }
+        })
+      )
+
+      return reviewsWithPassengerInfo
     } catch (error) {
       console.error("Error fetching review: " + error)
       throw new Error("Error fetching review: " + error.message)
@@ -105,30 +125,32 @@ class ReviewModel {
     try {
       // Fetch all reviews from MongoDB
       const result = await Review.aggregate([
-        { $match: { driverId } }, // Filter reviews for this driver
+        { $match: { driverId } },
         {
           $group: {
             _id: null,
-            avgRating: { $avg: "$note" }, // Calculate average note
-            totalReviews: { $sum: 1 }, // Count reviews
+            avgRating: { $avg: "$note" },
+            totalReviews: { $sum: 1 },
           },
         },
       ])
 
-      const averageRating = result.length > 0 ? result[0].avgRating : 0
+      const averageRating =
+        result.length > 0 && result[0].avgRating !== null
+          ? parseFloat(result[0].avgRating.toFixed(2))
+          : 0.0
       const totalReviews = result.length > 0 ? result[0].totalReviews : 0
 
-      // Insert or Update in reviews_summaries table
       await db.query(
         `INSERT INTO reviews_summaries (driver_id, average_rating, total_reviews)
          VALUES (?, ?, ?) 
          ON DUPLICATE KEY UPDATE 
-         average_rating = VALUES(average_rating), 
-         total_reviews = VALUES(total_reviews)`,
+           average_rating = VALUES(average_rating), 
+           total_reviews = VALUES(total_reviews)`,
         [driverId, averageRating, totalReviews]
       )
     } catch (error) {
-      throw new Error("Error interting/updating review: " + error.message)
+      throw new Error("Error inserting/updating review: " + error.message)
     }
   }
 
@@ -147,7 +169,7 @@ class ReviewModel {
           totalReviews: rows[0].total_reviews,
         }
       }
-      return { averageRating: 0, totalReviews: 0 } // Default values if no data
+      return { averageRating: 0.0, totalReviews: 0 }
     } catch (error) {
       throw new Error("Error fetching summary: " + error.message)
     }

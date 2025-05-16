@@ -215,8 +215,6 @@ class BookingModel {
   static async updateBooking(bookingId, updateData) {
     const { Ride } = require("../models/Ride")
     try {
-      console.log("updateData", updateData)
-
       const updatedBooking = await Booking.findByIdAndUpdate(
         bookingId,
         updateData,
@@ -224,7 +222,6 @@ class BookingModel {
           new: true,
         }
       )
-      console.log("updatedBooking", updatedBooking)
       if (!updatedBooking) {
         throw new Error("Booking not found")
       }

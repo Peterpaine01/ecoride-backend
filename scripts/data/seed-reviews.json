@@ -1,0 +1,20 @@
+[
+  {
+    "bookingId": "68266dae71999371add9ee03",
+    "passengerId": 246,
+    "comment": "Chauffeur sympa, mais un peu en retard.",
+    "note": 4,
+    "wasRideOk": false,
+    "complain": "c'est important la ponctualité !",
+    "title": "Pas content"
+  },
+  {
+    "bookingId": "68266dad71999371add9edff",
+    "passengerId": 247,
+    "comment": "Bonne expérience dans l’ensemble.",
+    "note": 4,
+    "wasRideOk": true,
+    "complain": "",
+    "title": "Bonne expérience"
+  }
+]

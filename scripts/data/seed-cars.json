@@ -1,0 +1,64 @@
+[
+  {
+    "email": "erikajohnston@hotmail.com",
+    "registration_number": "AA-123-ER",
+    "first_registration_date": "2021-05-10",
+    "model": "Sportage",
+    "color": "Rouge",
+    "energy_id": 2,
+    "brand_id": 24,
+    "available_seats": 4
+  },
+  {
+    "email": "erikajohnston@hotmail.com",
+    "registration_number": "BB-456-ER",
+    "first_registration_date": "2022-11-22",
+    "model": "Niro",
+    "color": "Blanc",
+    "energy_id": 3,
+    "brand_id": 24,
+    "available_seats": 3
+  },
+
+  {
+    "email": "jmay@yahoo.com",
+    "registration_number": "CC-789-JM",
+    "first_registration_date": "2020-03-15",
+    "model": "CX-5",
+    "color": "Gris",
+    "energy_id": 1,
+    "brand_id": 21,
+    "available_seats": 5
+  },
+  {
+    "email": "jmay@yahoo.com",
+    "registration_number": "DD-321-JM",
+    "first_registration_date": "2023-02-01",
+    "model": "MX-30",
+    "color": "Bleu",
+    "energy_id": 4,
+    "brand_id": 21,
+    "available_seats": 4
+  },
+
+  {
+    "email": "hughesbrandon@yahoo.com",
+    "registration_number": "EE-654-HB",
+    "first_registration_date": "2022-08-30",
+    "model": "Model 3",
+    "color": "Noir",
+    "energy_id": 3,
+    "brand_id": 27,
+    "available_seats": 4
+  },
+  {
+    "email": "hughesbrandon@yahoo.com",
+    "registration_number": "FF-987-HB",
+    "first_registration_date": "2021-06-18",
+    "model": "Model Y",
+    "color": "Vert foncé",
+    "energy_id": 3,
+    "brand_id": 27,
+    "available_seats": 6
+  }
+]

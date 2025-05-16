@@ -1,0 +1,12 @@
+[
+  { "rideId": "68266aa497ac35bc69e2ea31", "passengerId": 245, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea2f", "passengerId": 246, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea2d", "passengerId": 247, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea2b", "passengerId": 248, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea29", "passengerId": 249, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea27", "passengerId": 250, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea25", "passengerId": 251, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea23", "passengerId": 245, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea21", "passengerId": 246, "seats": 1 },
+  { "rideId": "68266aa497ac35bc69e2ea1f", "passengerId": 247, "seats": 1 }
+]

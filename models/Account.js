@@ -47,7 +47,7 @@ class Account {
       // console.log("account results", results)
 
       // Send email with verification link
-      await Account.sendVerificationEmail(email, verificationToken)
+      // await Account.sendVerificationEmail(email, verificationToken)
 
       return results.insertId
     } catch (error) {

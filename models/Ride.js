@@ -196,10 +196,10 @@ class RideModel {
 
       if (departureDate) {
         const startOfDay = new Date(departureDate)
-        startOfDay.toLocaleString()
+        startOfDay.setHours(0, 0, 0, 0) // début du jour à minuit
 
         const endOfDay = new Date(departureDate)
-        endOfDay.setHours(23, 59, 59, 999).toLocaleString()
+        endOfDay.setHours(23, 59, 59, 999) // fin du jour
 
         const isSameDay =
           startOfDay.getFullYear() === todayLocal.getFullYear() &&
@@ -209,6 +209,7 @@ class RideModel {
         if (isFuzzy) {
           const endOfFuzzyWindow = new Date(startOfDay)
           endOfFuzzyWindow.setDate(endOfFuzzyWindow.getDate() + 3)
+          endOfFuzzyWindow.setHours(23, 59, 59, 999) // fin du 3e jour
 
           filter.departureDate = {
             $gte: startOfDay,
