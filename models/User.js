@@ -80,21 +80,28 @@ class User extends Account {
     try {
       const [results] = await db.query(
         `
-        SELECT 
-          u.account_id, 
-          u.username, 
-          u.photo, 
-          u.credits, 
-          u.gender, 
-          u.is_driver,
-          a.account_type,
-          r.label AS role_label
-        FROM users u
-        JOIN accounts a ON u.account_id = a.id
-        LEFT JOIN staff_members sm ON sm.account_id = a.id AND a.account_type = 'webmaster'
-        LEFT JOIN roles r ON r.id = sm.role_id
-        WHERE u.account_id = ?
-        `,
+      SELECT 
+        u.account_id, 
+        u.username, 
+        u.photo, 
+        u.credits, 
+        u.gender, 
+        u.is_driver,
+        a.account_type,
+
+        CASE
+          WHEN r.label = 'administrator' THEN 'admin'
+          WHEN sm.account_id IS NOT NULL THEN 'webmaster'
+          ELSE 'user'
+        END AS role_label
+
+      FROM users u
+      JOIN accounts a ON u.account_id = a.id
+      LEFT JOIN staff_members sm ON sm.account_id = a.id
+      LEFT JOIN roles r ON r.id = sm.role_id
+
+      WHERE u.account_id = ?
+      `,
         [account_id]
       )
 
@@ -232,8 +239,13 @@ class User extends Account {
 
       // MAJ drivers si is_driver
       if (is_driver) {
-        const checkDriverQuery = `SELECT id FROM drivers WHERE user_id = ?`
+        const checkDriverQuery = `SELECT user_id FROM drivers WHERE user_id = ?`
         const [existingDriver] = await db.query(checkDriverQuery, [userId])
+
+        const safeAcceptSmoking =
+          typeof accept_smoking === "number" ? accept_smoking : 0
+        const safeAcceptAnimals =
+          typeof accept_animals === "number" ? accept_animals : 0
 
         if (existingDriver.length === 0) {
           const insertDriverQuery = `
@@ -242,8 +254,8 @@ class User extends Account {
           `
           await db.query(insertDriverQuery, [
             userId,
-            accept_smoking ?? false,
-            accept_animals ?? false,
+            safeAcceptSmoking,
+            safeAcceptAnimals,
           ])
         } else {
           const updateDriverQuery = `
@@ -252,8 +264,8 @@ class User extends Account {
             WHERE user_id = ?
           `
           await db.query(updateDriverQuery, [
-            accept_smoking ?? false,
-            accept_animals ?? false,
+            safeAcceptSmoking,
+            safeAcceptAnimals,
             userId,
           ])
         }

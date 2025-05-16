@@ -100,20 +100,44 @@ class Account {
 
       const account = results[0]
 
-      // Check password
       const isMatch = await bcrypt.compare(password, account.password)
       if (!isMatch) {
         throw new Error("Incorrect password")
       }
 
-      // Create token JWT
-      const token = jwt.sign(
-        { id: account.id, email: account.email },
-        process.env.JWT_KEY
-      )
+      const payload = {
+        id: account.id,
+        account_type: account.account_type, // 'user' ou 'webmaster'
+      }
 
-      // Return token and user id
-      return { token, userId: account.id }
+      const token = jwt.sign(payload, process.env.JWT_KEY, {
+        expiresIn: "365d",
+      })
+
+      let role_label = null
+
+      if (account.account_type === "webmaster") {
+        const [roleResults] = await db.query(
+          `
+        SELECT s.account_id, a.email, r.label AS role_label
+        FROM staff_members s
+        JOIN accounts a ON s.account_id = a.id
+        JOIN roles r ON s.role_id = r.id
+        WHERE s.account_id = ?
+        `,
+          [account.id]
+        )
+
+        if (roleResults.length > 0) {
+          role_label = roleResults[0].role_label
+        }
+      }
+
+      return {
+        token,
+        userId: account.id,
+        // roleLabel: role_label,
+      }
     } catch (err) {
       console.error("Error while trying to connect:", err)
       throw err
