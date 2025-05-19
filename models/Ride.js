@@ -3,6 +3,7 @@ const db = require("../config/mysql")
 
 const Driver = require("./Driver")
 const { Booking, BookingModel } = require("./Booking")
+const Car = require("./Car")
 
 const normalizeCity = require("../utils/normalizeCity")
 
@@ -158,7 +159,12 @@ class RideModel {
       acceptSmoking,
       acceptAnimals,
       remainingSeats,
+      isElectric,
     } = searchData
+
+    isElectric = isElectric === "true" ? true : false
+
+    console.log("isElectric", isElectric)
 
     const isFuzzy = fuzzy === "true"
 
@@ -251,7 +257,13 @@ class RideModel {
         departureTime: 1,
       })
 
-      if (!gender && !acceptSmoking && !acceptAnimals && !minRating) {
+      if (
+        !gender &&
+        !acceptSmoking &&
+        !acceptAnimals &&
+        !minRating &&
+        !isElectric
+      ) {
         return rides
       }
 
@@ -259,10 +271,16 @@ class RideModel {
       const filteredRides = []
       acceptSmoking = acceptSmoking === "true" ? 1 : 0
       acceptAnimals = acceptAnimals === "true" ? 1 : 0
-
       for (const ride of rides) {
         const driver = await Driver.getDriverById(ride.driver.driverId)
         if (!driver) continue
+
+        if (isElectric) {
+          const car = await Car.getCarById(ride.car.carId)
+          console.log("car.energy_id", car.energy_id)
+
+          if (!car || car.energy_id !== 3) continue
+        }
 
         if (gender && gender !== "all") {
           const acceptedGenders =
@@ -275,6 +293,7 @@ class RideModel {
 
         filteredRides.push(ride)
       }
+      console.log("filteredRides after", filteredRides.length)
       return filteredRides
     } catch (error) {
       throw new Error("Error fetching rides: " + error.message)

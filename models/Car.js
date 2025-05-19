@@ -66,6 +66,7 @@ class Car {
           cars.color, 
           cars.available_seats, 
           brands.label AS brand, 
+          energies.id AS energy_id,
           energies.label AS energy,
           cars.driver_id
         FROM cars

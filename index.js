@@ -41,9 +41,11 @@ app.use(require("./routes/rideRoutes"))
 app.use(require("./routes/bookingRoutes"))
 app.use(require("./routes/reviewRoutes"))
 app.use(require("./routes/adminRoutes"))
-app.use(require("./routes/staffMembersRoutes"))
-app.use(require("./routes/rolesRoutes"))
+app.use(require("./routes/staffMemberRoutes"))
+app.use(require("./routes/roleRoutes"))
 app.use(require("./routes/statisticsRoutes"))
+app.use(require("./routes/brandRoutes"))
+app.use(require("./routes/energyRoutes"))
 app.use(require("./routes/openRoutes"))
 
 const PORT = process.env.PORT || 5000
@@ -66,11 +68,17 @@ cron.schedule("0 0 * * *", async () => {
 axios
   .get("https://api64.ipify.org?format=json")
   .then((response) => {
-    console.log(`🌍 IP publique du serveur: ${response.data.ip}`)
+    console.log(`🌍 IP publique du serveur Northflank : ${response.data.ip}`)
   })
   .catch((error) => {
     console.error("❌ Impossible de récupérer l'IP publique", error)
   })
+
+// Find Ip public local
+axios
+  .get("https://api.ipify.org?format=json")
+  .then((res) => console.log("IP publique à autoriser :", res.data.ip))
+  .catch((err) => console.error("Erreur récupération IP :", err))
 
 app.get("/", (req, res) => {
   res
