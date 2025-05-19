@@ -88,25 +88,27 @@ class Car {
   static async getCarsByDriver(driverId) {
     try {
       const query = `
-          SELECT 
-          cars.id, 
-          cars.registration_number, 
-          cars.first_registration_date, 
-          cars.model, 
-          cars.color, 
-          cars.available_seats, 
-          brands.label AS brand, 
-          energies.label AS energy
-        FROM cars
-        JOIN brands ON cars.brand_id = brands.id
-        JOIN energies ON cars.energy_id = energies.id
-        WHERE cars.driver_id = ?;
-      `
+      SELECT 
+        cars.id, 
+        cars.registration_number, 
+        cars.first_registration_date, 
+        cars.model, 
+        cars.color, 
+        cars.available_seats, 
+        brands.label AS brand, 
+        energies.id AS energy_id,
+        energies.label AS energy
+      FROM cars
+      JOIN brands ON cars.brand_id = brands.id
+      JOIN energies ON cars.energy_id = energies.id
+      WHERE cars.driver_id = ?;
+    `
 
       const [rows] = await db.query(query, [driverId])
-      return rows // Return cars list
+      return Array.isArray(rows) ? rows : []
     } catch (error) {
-      throw new Error(error.message)
+      console.error("Erreur dans getCarsByDriver:", error)
+      return [] // ✅ fallback sécurisé en cas d’erreur
     }
   }
 
