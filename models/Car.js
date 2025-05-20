@@ -34,11 +34,33 @@ class Car {
     driver_id,
   }) {
     try {
-      const query = `
-        INSERT INTO cars (registration_number, first_registration_date, model, color, energy_id, brand_id, available_seats, driver_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-      `
-      const [result] = await db.query(query, [
+      const checkQuery = `
+      SELECT id FROM cars 
+      WHERE registration_number = ? AND driver_id = ?
+      LIMIT 1;
+    `
+      const [existing] = await db.query(checkQuery, [
+        registration_number,
+        driver_id,
+      ])
+
+      if (existing.length > 0) {
+        throw new Error("Ce numéro d'immatriculation est déjà utilisé.")
+      }
+
+      const insertQuery = `
+      INSERT INTO cars (
+        registration_number, 
+        first_registration_date, 
+        model, 
+        color, 
+        energy_id, 
+        brand_id, 
+        available_seats, 
+        driver_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+    `
+      const [result] = await db.query(insertQuery, [
         registration_number,
         first_registration_date,
         model,
@@ -49,9 +71,9 @@ class Car {
         driver_id,
       ])
 
-      return result.insertId // Return car id
+      return result.insertId
     } catch (error) {
-      throw new Error(error.message)
+      throw error
     }
   }
 
@@ -108,7 +130,7 @@ class Car {
       return Array.isArray(rows) ? rows : []
     } catch (error) {
       console.error("Erreur dans getCarsByDriver:", error)
-      return [] // ✅ fallback sécurisé en cas d’erreur
+      return []
     }
   }
 

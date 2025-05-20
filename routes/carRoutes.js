@@ -23,7 +23,7 @@ router.post("/create-car", authenticateToken, async (req, res) => {
     available_seats,
   } = req.body
 
-  const driver_id = req.user.id // Get driver id from token JWT
+  const driver_id = req.user.id
 
   try {
     const carId = await Car.createCar({
@@ -65,12 +65,11 @@ router.get("/user-cars/:id", authenticateToken, async (req, res) => {
 
   try {
     const cars = await Car.getCarsByDriver(driverId)
-    if (cars.length === 0) {
-      return res.status(404).json({ message: "No car found for this driver" })
-    }
-    res.status(200).json(cars) // Return cars list
+
+    res.status(200).json(cars)
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    console.error("Erreur fetching cars", error)
+    res.status(500).json({ error: "Internal server error" })
   }
 })
 

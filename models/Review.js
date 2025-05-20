@@ -21,6 +21,10 @@ const reviewSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isModerated: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const Review = mongoose.model("Review", reviewSchema)
@@ -73,6 +77,11 @@ class ReviewModel {
     } catch (error) {
       throw new Error("Error while creating review: " + error.message)
     }
+  }
+
+  static async getAllReviews() {
+    const reviews = await Review.find().populate("booking").sort({ _id: -1 })
+    return reviews
   }
 
   static async getReviewById(reviewId) {

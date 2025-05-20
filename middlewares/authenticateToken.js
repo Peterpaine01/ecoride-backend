@@ -22,6 +22,8 @@ const authenticateToken = async (req, res, next) => {
 
 const isStaffMember = async (req, res, next) => {
   try {
+    console.log("req.user", req.user)
+
     if (!req.user) {
       return res.status(401).json({ error: "Authentication required" })
     }
@@ -30,7 +32,7 @@ const isStaffMember = async (req, res, next) => {
       "SELECT * FROM staff_members WHERE account_id = ?",
       [req.user.id]
     )
-
+    console.log("staff", staff)
     if (staff.length === 0) {
       return res
         .status(403)
