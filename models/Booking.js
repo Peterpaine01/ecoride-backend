@@ -190,7 +190,7 @@ class BookingModel {
       // console.log(bookings)
 
       if (!bookings || bookings.length === 0) {
-        throw new Error("No booking found for this user")
+        return bookings
       }
 
       // Get driver infos from drivers table (SQL)
