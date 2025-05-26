@@ -45,7 +45,7 @@ class Car {
       ])
 
       if (existing.length > 0) {
-        throw new Error("Ce numéro d'immatriculation est déjà utilisé.")
+        throw new Error("Register number is aleady used.")
       }
 
       const insertQuery = `
@@ -99,9 +99,9 @@ class Car {
 
       const [rows] = await db.query(query, [carId])
       if (rows.length === 0) {
-        return null // No car found
+        return null
       }
-      return rows[0] // Return car found
+      return rows[0]
     } catch (error) {
       throw new Error(error.message)
     }

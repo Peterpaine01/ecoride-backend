@@ -1,6 +1,8 @@
 const express = require("express")
 const router = express.Router()
 
+const sanitizeInput = require("../middlewares/sanitizeInput")
+
 const db = require("../config/mysql")
 const mongoose = require("../config/mongodb")
 
@@ -18,50 +20,55 @@ const {
   isAdmin,
 } = require("../middlewares/authenticateToken")
 
-router.post("/create-ride", authenticateToken, async (req, res) => {
-  try {
-    const user = req.user
+router.post(
+  "/create-ride",
+  authenticateToken,
+  sanitizeInput,
+  async (req, res) => {
+    try {
+      const user = req.user
 
-    // Check if user is a driver
-    const [driverResults] = await db.query(
-      `SELECT user_id FROM drivers WHERE user_id = ?`,
-      [user.id]
-    )
+      // Check if user is a driver
+      const [driverResults] = await db.query(
+        `SELECT user_id FROM drivers WHERE user_id = ?`,
+        [user.id]
+      )
 
-    if (driverResults.length === 0) {
-      return res.status(403).json({
-        message: "Acces denied : you need to be a driver to set a ride",
-      })
+      if (driverResults.length === 0) {
+        return res.status(403).json({
+          message: "Acces denied : you need to be a driver to set a ride",
+        })
+      }
+
+      const {
+        departureDate,
+        departureAddress,
+        destinationAddress,
+        duration,
+        availableSeats,
+        creditsPerPassenger,
+        description,
+        vehicleId,
+      } = req.body
+
+      const ride = await RideModel.createRide(
+        departureDate,
+        departureAddress,
+        destinationAddress,
+        duration,
+        availableSeats,
+        creditsPerPassenger,
+        description,
+        vehicleId,
+        user.id
+      )
+
+      res.status(201).json(ride)
+    } catch (error) {
+      res.status(500).json({ message: error.message })
     }
-
-    const {
-      departureDate,
-      departureAddress,
-      destinationAddress,
-      duration,
-      availableSeats,
-      creditsPerPassenger,
-      description,
-      vehicleId,
-    } = req.body
-
-    const ride = await RideModel.createRide(
-      departureDate,
-      departureAddress,
-      destinationAddress,
-      duration,
-      availableSeats,
-      creditsPerPassenger,
-      description,
-      vehicleId,
-      user.id
-    )
-
-    res.status(201).json(ride)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
   }
-})
+)
 
 router.get("/ride/:id", async (req, res) => {
   try {
@@ -125,7 +132,7 @@ router.patch("/update-ride/:id", authenticateToken, async (req, res) => {
     // Update ride
     const updatedRide = await RideModel.updateRide(rideId, updateData)
 
-    // If rideStatus === "completed", update related bookings and send mail
+    // If rideStatus === "completed", update related bookings
     const bookingStatus = updateData.rideStatus
 
     if (updateData.rideStatus) {
@@ -173,6 +180,8 @@ router.get("/driver-rides", authenticateToken, async (req, res) => {
 })
 
 router.get("/search-rides", async (req, res) => {
+  console.log("appel API")
+
   try {
     const searchData = req.query
 
