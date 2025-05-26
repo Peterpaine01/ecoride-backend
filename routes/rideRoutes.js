@@ -111,46 +111,51 @@ router.get("/ride/:rideId/bookings", async (req, res) => {
   }
 })
 
-router.patch("/update-ride/:id", authenticateToken, async (req, res) => {
-  try {
-    const user = req.user
-    const rideId = req.params.id
-    const updateData = req.body
+router.patch(
+  "/update-ride/:id",
+  authenticateToken,
+  sanitizeInput,
+  async (req, res) => {
+    try {
+      const user = req.user
+      const rideId = req.params.id
+      const updateData = req.body
 
-    // Check if user is a driver
-    const [driverResults] = await db.query(
-      `SELECT user_id FROM drivers WHERE user_id = ?`,
-      [user.id]
-    )
-
-    if (driverResults.length === 0) {
-      return res.status(403).json({
-        message: "Acces denied : you need to be a driver to update a ride",
-      })
-    }
-
-    // Update ride
-    const updatedRide = await RideModel.updateRide(rideId, updateData)
-
-    // If rideStatus === "completed", update related bookings
-    const bookingStatus = updateData.rideStatus
-
-    if (updateData.rideStatus) {
-      console.log(`Ride ${rideId} is completed. Updating related bookings...`)
-      await BookingModel.updateBookingsAndNotifyPassengers(
-        rideId,
-        bookingStatus
+      // Check if user is a driver
+      const [driverResults] = await db.query(
+        `SELECT user_id FROM drivers WHERE user_id = ?`,
+        [user.id]
       )
-    }
 
-    res
-      .status(200)
-      .json({ message: "Ride updated successfully", ride: updatedRide })
-  } catch (error) {
-    console.error("Error while updating ride :" + error)
-    res.status(500).json({ message: "Server error" + error.message })
+      if (driverResults.length === 0) {
+        return res.status(403).json({
+          message: "Acces denied : you need to be a driver to update a ride",
+        })
+      }
+
+      // Update ride
+      const updatedRide = await RideModel.updateRide(rideId, updateData)
+
+      // If rideStatus === "completed", update related bookings
+      const bookingStatus = updateData.rideStatus
+
+      if (updateData.rideStatus) {
+        console.log(`Ride ${rideId} is completed. Updating related bookings...`)
+        await BookingModel.updateBookingsAndNotifyPassengers(
+          rideId,
+          bookingStatus
+        )
+      }
+
+      res
+        .status(200)
+        .json({ message: "Ride updated successfully", ride: updatedRide })
+    } catch (error) {
+      console.error("Error while updating ride :" + error)
+      res.status(500).json({ message: "Server error" + error.message })
+    }
   }
-})
+)
 
 router.get("/driver-rides", authenticateToken, async (req, res) => {
   try {
