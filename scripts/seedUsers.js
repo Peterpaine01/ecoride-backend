@@ -9,8 +9,7 @@ const BASE_URL = "http://localhost:3000"
 const createUsers = async () => {
   const rawData = fs.readFileSync(FILE_PATH, "utf-8")
   const users = JSON.parse(rawData)
-
-  const tokenMap = {} // Pour stocker { userId: token }
+  const tokenMap = {}
 
   for (const user of users) {
     const payload = {
@@ -29,11 +28,11 @@ const createUsers = async () => {
       tokenMap[userId] = token
 
       console.log(
-        `✅ Créé: ${payload.email} (${payload.is_driver ? "driver" : "user"})`
+        `Créé: ${payload.email} (${payload.is_driver ? "driver" : "user"})`
       )
       console.log(`🔑 Email: ${payload.email} | Password: ${payload.password}`)
     } catch (err) {
-      console.error(`❌ Erreur pour ${payload.email}:`)
+      console.error(`Erreur pour ${payload.email}:`)
 
       if (err.response) {
         console.error(`→ Statut: ${err.response.status}`)
@@ -53,12 +52,11 @@ const createUsers = async () => {
   // Sauvegarde le mapping { userId: token } dans un fichier JSON
   try {
     fs.writeFileSync(OUTPUT_PATH, JSON.stringify(tokenMap, null, 2), "utf-8")
-    console.log(`📁 Fichier de tokens sauvegardé dans ${OUTPUT_PATH}`)
+    console.log(`Fichier de tokens sauvegardé dans ${OUTPUT_PATH}`)
   } catch (err) {
-    console.error(`❌ Erreur d’écriture dans ${OUTPUT_PATH} :`, err.message)
+    console.error(`Erreur d’écriture dans ${OUTPUT_PATH} :`, err.message)
   }
 }
-
 createUsers()
 
 // node scripts/seedUsers.js

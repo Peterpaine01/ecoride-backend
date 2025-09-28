@@ -1,5 +1,5 @@
 # Utiliser une image Node avec Yarn préinstallé
-FROM node:18-bookworm-slim
+FROM node:22-bookworm-slim
 
 # Définir le répertoire de travail
 WORKDIR /app
