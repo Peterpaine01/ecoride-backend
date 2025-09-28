@@ -80,24 +80,34 @@ axios
   .then((res) => console.log("IP publique à autoriser :", res.data.ip))
   .catch((err) => console.error("Erreur récupération IP :", err))
 
-app.get("/", (req, res) => {
-  res
-    .status(200)
-    .json({ message: "Server Node.js running! Welcome to Ecoride project!" })
+app.get("/", async (req, res) => {
+  try {
+    const response = await axios.get("https://api64.ipify.org?format=json")
+    const ip = response.data.ip
+    res.status(200).json({
+      message: "Server Node.js running! Welcome to Ecoride project!",
+      northflankIP: ip,
+    })
+  } catch (err) {
+    res.status(500).json({
+      message: "Server Node.js running! Welcome to Ecoride project!",
+      error: "Impossible de récupérer l'IP publique",
+      details: err.message,
+    })
+  }
 })
 
 app.all("*", (req, res) => {
   res.status(404).json({ message: "This route does not exist" })
 })
 
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server running on port: ${PORT}`)
-  setTimeout(async () => {
-    try {
-      const res = await axios.get("https://api64.ipify.org?format=json")
-      console.log("🌍 IP publique Northflank :", res.data.ip)
-    } catch (err) {
-      console.error("❌ Impossible de récupérer l'IP publique :", err.message)
-    }
-  }, 2000)
+  try {
+    const res = await axios.get("https://google.com")
+    console.log("✅ Test HTTP OK :", res.status)
+  } catch (err) {
+    console.error("❌ Impossible de joindre Google :", err.message)
+  }
+  // await connectToDatabase();
 })
