@@ -90,13 +90,14 @@ app.all("*", (req, res) => {
   res.status(404).json({ message: "This route does not exist" })
 })
 
-app.listen(PORT, "0.0.0.0", async () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port: ${PORT}`)
-  try {
-    const res = await axios.get("https://google.com")
-    console.log("✅ Test HTTP OK :", res.status)
-  } catch (err) {
-    console.error("❌ Impossible de joindre Google :", err.message)
-  }
-  // await connectToDatabase();
+  setTimeout(async () => {
+    try {
+      const res = await axios.get("https://api64.ipify.org?format=json")
+      console.log("🌍 IP publique Northflank :", res.data.ip)
+    } catch (err) {
+      console.error("❌ Impossible de récupérer l'IP publique :", err.message)
+    }
+  }, 2000)
 })
