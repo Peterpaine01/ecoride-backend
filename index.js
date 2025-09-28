@@ -92,6 +92,11 @@ app.all("*", (req, res) => {
 
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`Server running on port: ${PORT}`)
-  axios.get("https://google.com")
+  try {
+    const res = await axios.get("https://google.com")
+    console.log("✅ Test HTTP OK :", res.status)
+  } catch (err) {
+    console.error("❌ Impossible de joindre Google :", err.message)
+  }
   // await connectToDatabase();
 })
